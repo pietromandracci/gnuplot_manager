@@ -16,7 +16,7 @@
 
 """ Functions used to plot data on plot windows and to do other tasks """
 
-from os import remove
+from os import remove, path, mkdir
 from time import sleep
 
 from .global_variables import *
@@ -46,7 +46,8 @@ def new_plot(*,
              title=None,
              xlabel=None, ylabel=None, zlabel=None,
              persistence=PERSISTENCE,
-             redirect_output=REDIRECT_OUT):        
+             redirect_output=REDIRECT_OUT,
+             options=None):        
     """ This function returns a plot as an istance of the class _PlotWindow.
 
         Several gnuplot terminal properties can be set.
@@ -91,6 +92,7 @@ def new_plot(*,
         redirect_output: True:  save gnuplot otuput and errors to files
                          False: send them to /dev/stdout and /dev/stderr
                          None:  send them to /dev/null
+        options:         a string containing other options for the terminal
 
         .. [1] read gnuplot documentation for format strings
 
@@ -389,7 +391,7 @@ def plot2d(plot_window, x_data, y_data, label=None, replot=False):
         message += ': 2D data on a 3D plot window'
         return status, message
     
-    return plot_window._add_curves([ [x_data, y_data, label] ], replot)        
+    return plot_window._add_curves([ [x_data, y_data, label, None] ], replot)        
 
         
 def plot3d(plot_window, x_data, y_data, z_data, label=None, replot=False):
@@ -419,7 +421,7 @@ def plot3d(plot_window, x_data, y_data, z_data, label=None, replot=False):
         message += ': 3D data on a 2D plot window'
         return status, message
     
-    return plot_window._add_curves([ [x_data, y_data, z_data, label] ], replot)
+    return plot_window._add_curves([ [x_data, y_data, z_data, label, None] ], replot)
 
         
 def plot_curves(plot_window, data_list, replot=False):
@@ -431,14 +433,21 @@ def plot_curves(plot_window, data_list, replot=False):
         plot_window:  the plot on which data should be plotted, which must 
                       have been previously created by the new_plot function
         data_list:    a list in one of the following forms:
-                      2D data: [ [x1 , y1, label1],     [x2, y2, label2 ,     ... ]
-                      3D data: [ [x1 , y1, z1, label1], [x2, y2, z2, label2], ... ] 
+                      2D data: [ [x1 , y1, label1, options1],     
+                                 [x2,  y2, label2, options1]     ... ]
+                      3D data: [ [x1,  y1, z1, label1, options1], 
+                                 [x2,  y2, z2, label2, options2], ... ] 
                       where:
-                      - x1 is a numpy.array with x-coordinates of the points to plot
-                      - y1 is a numpy.array with y-coordinates of the points to plot 
-                      - z1 is a numpy.array with z-coordinates of the points to plot  
-                      - label1 is a string that will be used to identify the plot 
+                      - x1 contains the x-coordinates of the points to plot
+                      - y1 contains the y-coordinates of the points to plot 
+                      - z1 contains the z-coordinates of the points to plot  
+                      - label1 is a string, that will be used to identify the plot 
                         in the legend, or None
+                      - options1 is a string, containing additional options
+                        or None
+                      The form must be consisted with the type of plot 
+                      that was defined at the plot window creation, 
+                      otherwise an error message is returned
         replot:       add new plots instead of overwerwriting an old ones
 
         Returns
@@ -494,7 +503,7 @@ def plot_function(plot_window, func_string, label=None, replot=False):
     if not isinstance(plot_window, _PlotWindow): return ERROR_NOT_A_PLOT    
     if (plot_window.plot_type is None): return ERROR_CLOSED_PLOT
     
-    return plot_window._add_functions([ [func_string, label] ], replot)
+    return plot_window._add_functions([ [func_string, label, None] ], replot)
 
 
 def plot_functions(plot_window, func_list, replot=False):
@@ -504,21 +513,17 @@ def plot_functions(plot_window, func_list, replot=False):
         ----------
         plot_window:  the plot on which data should be plotted, which must 
                       have been previously created by the new_plot function
-        func_list:    a list in one of the following forms:
-                      [ [function1, label1],  [function2, label2 ] ... ]
-                      where 
-                      - function1 is a string containing the math expression
-                        of the function to be plotted, using x
-                        (or x and y for 3D plots) as independent variable
-                        Examples:
-                        '3 * sin(x) + x**2'
-                        '2 * sin(x**2 + y**2)'
-                      - label1 a string used to describe the function in the 
-                        plot legend: if it is None, the label is not set, 
-                        and gnuplot will automatically manage its value: 
-                        if you don't want a label to be shown, set it to 
-                        "" (empy string)
-                      
+        func_list:    a list in one the following form:
+                      [ [function1, label1, options1], 
+                        [function2, label2, options1], ... ]
+                      where:
+                      - function1 is a string defining the function 
+                        to be plotted
+                        e.g. '2*x**2+3*cos(x)' or 'sin(x**2+y**2) 
+                      - label1 is a string, that will be used to identify 
+                        the plot in the legend, or None
+                      - options1 is a string, containing additional options
+                        or None                       
                       The string is sent to gnuplot as it is, without checking 
                       that it is a correct function al expression. If it is not, 
                       gnuplot will provide  an error message, which will be
@@ -539,6 +544,94 @@ def plot_functions(plot_window, func_list, replot=False):
     if (plot_window.plot_type is None): return ERROR_CLOSED_PLOT
     
     return plot_window._add_functions(func_list, replot)
+
+
+# +----------------------------------+
+# | Functions to print plots to file |
+# +----------------------------------+
+
+
+def plot_print(plot_window,
+               terminal=DEFAULT_PRINT_TERM,
+               filename=None,
+               options=None):
+    """ Export the plot to a file.
+
+        Parameters
+        ----------
+
+        plot_window:    the plot on which data should be plotted, which must 
+                        have been previously created by the new_plot function
+        terminal:       type of terminal to use to print the image 
+                        e.g. 'png', 'jpeg', 'gif'
+        filename:       the file to which the image must be saved
+                        if non given, or set to None, a default one is used
+        options:        a string with terminal options,
+                        read gnuplot documentations for help
+
+        Returns
+        -------
+
+        One of the tuples defined in the errors.py module
+    """
+
+    (status, message) = NOERROR
+    
+    if not isinstance(plot_window, _PlotWindow): return ERROR_NOT_A_PLOT
+    if (plot_window.plot_type is None): return ERROR_CLOSED_PLOT
+    if ( (not plot_window.data_filenames) and (not plot_window.functions) ):
+        return ERROR_NO_REPLOT    
+    
+    if terminal not in PRINT_TERMINALS: return ERROR_UNKNOWN_TERM   
+
+    if not path.exists(DIRNAME_IMAGES): mkdir(DIRNAME_IMAGES)
+    if (filename is None):
+        filename = ( PRINT_FILENAME
+                     + str(plot_window.window_number)
+                     + PRINT_EXT[terminal] )
+    else:
+        filename = str(filename)
+    
+    plot_window._command('set terminal push')
+    command_string =  'set terminal '
+    command_string += terminal
+    if (options is not None):
+        command_string += ' ' + str(options)    
+    plot_window._command(command_string)
+    command_string = 'set output '
+    filename = path.join(DIRNAME_IMAGES,
+                         plot_window._correct_filename(filename))
+    command_string += '\"' + filename  + '\"'
+    plot_window._command(command_string)
+    plot_window._command('replot')
+    plot_window._command('set terminal pop')
+
+    return (status, message)
+
+
+def plot_print_all(terminal=DEFAULT_PRINT_TERM, options=None):
+    """ Esport all the open plot windows to files.
+
+        Parameters
+        ----------
+
+        terminal:       type of terminal to use to print the plots 
+                        e.g. 'png', 'jpeg', 'gif'
+        options:        a string with terminal options,
+                        read gnuplot documentations for help
+
+        Returns
+        -------
+
+        One of the tuples defined in the errors.py module
+    """
+
+    (status, message) = NOERROR
+       
+    for plot_window in window_list:
+        plot_print(plot_window, terminal=terminal, options=options)
+
+    return (status, message)    
 
 
 # +---------------------------------------------+
@@ -760,7 +853,7 @@ def plot_replot_all():
 # | Utility functions | 
 # +-------------------+
 
-def plot_label(plot_window,*, x=1, y=1, label=None, erase=False, replot=False):
+def plot_label(plot_window,*, x=1, y=1, z=1, label=None, erase=False, replot=False):
     """ Prints a label on a previously initialized plot.
 
         The label is not shown immediately, but at the first plotting action.
@@ -773,7 +866,7 @@ def plot_label(plot_window,*, x=1, y=1, label=None, erase=False, replot=False):
 
         (All the following parameters are keyword-only)       
 
-        x, y:         the position on the plot at which the label must 
+        x, y, z:      the position on the plot at which the label must 
                       be created, expressed in characters
         label:        a string containing the label to be printed
                       if it is not a string, will be converted to string
@@ -798,7 +891,7 @@ def plot_label(plot_window,*, x=1, y=1, label=None, erase=False, replot=False):
     if label is not None:
         plot_window._command('set label \"' + str(label) + '\"'
                              + ' at character '
-                             + str(x) + ',' + str(y) + ',0')
+                             + str(x) + ',' + str(y) + ',' + str(z))
                             #+ 'left norotate front')
     plot_window._command('show label')
     if replot: return plot_replot(plot_window)

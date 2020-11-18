@@ -37,6 +37,7 @@ class _PlotWindow:
                  height=DEFAULT_HEIGHT,
                  xpos=DEFAULT_XPOS,
                  ypos=DEFAULT_YPOS,
+                 options=None,
                  plot_type=DEFAULT_TYPE,
                  title=None,
                  persistence=PERSISTENCE,
@@ -64,6 +65,7 @@ class _PlotWindow:
             redirect_output: True:  save gnuplot otuput and errors to files
                              False: send then to /dev/stdout and /dev/stderr
                              None:  send them to /dev/null
+            options:         a string containing other options for the terminal
 
             Initialized data attributes
             ---------------------------
@@ -149,8 +151,8 @@ class _PlotWindow:
         self.zmax = None
             
         # Create the data files directory, if it doesn't exist
-        if not path.exists(DIRNAME):       mkdir(DIRNAME)
-        if not path.exists(DIRNAME_DATA):  mkdir(DIRNAME_DATA)
+        if not path.exists(DIRNAME):        mkdir(DIRNAME)
+        if not path.exists(DIRNAME_DATA):   mkdir(DIRNAME_DATA)
                 
         # Start the gnuplot process to plot on this window
         if persistence: exec_list = ['gnuplot','-p']
@@ -191,9 +193,12 @@ class _PlotWindow:
                                          stderr=DEVNULL,
                                          universal_newlines=True)
         if not gnuplot_default:
-            self._command('set terminal ' + str(self.term_type)
-                          + ' size '      + str(width) + ',' + str(height)
-                          + ' position '  + str(xpos)  + ',' + str(ypos)   )
+            command_string = ( 'set terminal ' + str(self.term_type)
+                               + ' size '      + str(width) + ',' + str(height)
+                               + ' position '  + str(xpos)  + ',' + str(ypos)   )
+            if (options is not None):
+                command_string += ' ' + str(options)
+            self._command(command_string)
         if title is not None:
             self._command('set title \"' + self._correct_filename(self.title)
                           + '\"')
@@ -322,16 +327,18 @@ class _PlotWindow:
             ----------
 
             function_list: a list in the following form:
-                          [ [function1, label1], [function2, label2], ... ]
+                          [ [function1, label1, options1], 
+                            [function2, label2, options1], ... ]
                           where:
                           - function1 is a string defining the function 
                             to be plotted
                             e.g. '2*x**2+3*cos(x)' or 'sin(x**2+y**2) 
                           - label1 is a string, that will be used to identify 
                             the plot in the legend, or None
+                          - options1 is a string, containing additional options
+                            or None 
             replot:       if True, the functions are plotted without erasing 
                           previously plotted ones
-
             Returns
             -------
             
@@ -345,11 +352,11 @@ class _PlotWindow:
             return ERROR_NO_REPLOT           
         # Check consistency of the whole list
         for i in range(len(function_list)):
-            if ( len(function_list[i]) != 2):
+            if ( len(function_list[i]) != 3):
                 (status, message) = ERROR_PLOT_PARAMETERS
                 if len(function_list) > 1:
                     message += ' in list item # ' + str(i)
-                message += ( ': 2 items expected, given '
+                message += ( ': 3 items expected, given '
                              + str(len(function_list[i])) )
                 return (status, message)
                    
@@ -372,10 +379,12 @@ class _PlotWindow:
             if (function_list[i][1] is None): label = None
             else:                             label = str(function_list[i][1])
             
-            # Add plot command to the command string
+            # Add  to the command string the plot command for this function
             command_string += str(function_list[i][0])
             if (label is not None):
                 command_string += ' title \"' + str(label) + '\"'
+            if (function_list[i][2] is not None):
+                command_string += ' ' + str(function_list[i][2])
             if (i < len(function_list) - 1):
                 command_string += ', '
                         
@@ -392,16 +401,18 @@ class _PlotWindow:
             ----------
 
             data_list:    a list in one of the following forms:
-                          2D data: [ [x1 , y1, label1],     
-                                     [x2, y2, label2 ,     ... ]
-                          3D data: [ [x1 , y1, z1, label1], 
-                                     [x2, y2, z2, label2], ... ] 
+                          2D data: [ [x1 , y1, label1, options1],     
+                                     [x2,  y2, label2, options1]     ... ]
+                          3D data: [ [x1,  y1, z1, label1, options1], 
+                                     [x2,  y2, z2, label2, options2], ... ] 
                           where:
                           - x1 contains the x-coordinates of the points to plot
                           - y1 contains the y-coordinates of the points to plot 
                           - z1 contains the z-coordinates of the points to plot  
                           - label1 is a string, that will be used to identify the plot 
                             in the legend, or None
+                          - options1 is a string, containing additional options
+                            or None
                           The form must be consisted with the type of plot 
                           that was defined at the plot window creation, 
                           otherwise an error message is returned
@@ -439,10 +450,10 @@ class _PlotWindow:
                 except TypeError:
                     data_list[i][2] = [ data_list[i][2] ]
                     len_z = 1                
-            if (len(data_list[i]) != self.n_axes + 1):
+            if (len(data_list[i]) != self.n_axes + 2):
                 (status, message) = ERROR_PLOT_PARAMETERS
                 if len(data_list) > 1: message += ' in list item # ' + str(i)
-                message += ( ': ' +  str(self.n_axes + 1)
+                message += ( ': ' +  str(self.n_axes + 2)
                              + ' items expected, given '
                              + str(len(data_list[i])) )
                 return (status, message)
@@ -484,7 +495,13 @@ class _PlotWindow:
                 label = None
             else:
                 label = str(data_list[i][self.n_axes])
-            
+
+            # Read additional options, if given
+            if (data_list[i][self.n_axes+1] is None):
+                options = None
+            else:
+                options = str(data_list[i][self.n_axes+1])
+                        
             # Define the unique filename for the data file of this curve
             string = FILENAME_DATA 
             string += '_w' + str(self.window_number)
@@ -520,6 +537,8 @@ class _PlotWindow:
                 command_string += ' title \"\"'
             else:
                 command_string += ' title \"' + label + '\"'
+            if (options is not None):
+                command_string += ' ' + options
             if (i < len(data_list) - 1):
                 command_string += ', '
                         

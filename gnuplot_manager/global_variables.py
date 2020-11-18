@@ -32,11 +32,25 @@ except FileNotFoundError:
 # Allowed gnuplot terminal types and default one
 DEFAULT_TERM       = 'x11'
 TERMINALS          = ('x11', 'wxt')
+DEFAULT_PRINT_TERM = 'png'
+PRINT_TERMINALS    = ('png', 'jpeg', 'eps', 'gif', 'svg',
+                      'latex', 'postscript','pdfcairo',
+                      'dumb')
+PRINT_EXT          = { 'png':        '.png',
+                       'jpeg':       '.jpg',
+                       'eps':        '.eps',
+                       'gif':        '.gif',
+                       'svg':        '.svg',
+                       'latex':      '.latex',
+                       'postscript': '.ps',
+                       'pdfcairo':   '.pdf',
+                       'dumb':       '.txt'
+                      }
 
 # Default dimensions and position on the screen of new plot windows
 DEFAULT_WIDTH      = 800
 DEFAULT_HEIGHT     = 600
-DEFAULT_XPOS       = 1000#480
+DEFAULT_XPOS       = 480
 DEFAULT_YPOS       = 100
 
 # Plot window types and default one
@@ -55,8 +69,12 @@ EOL                = '\n'
 # Name of the output directory
 DIRNAME            = 'gnuplot.out'
 
+# Default name of output file
+PRINT_FILENAME     = 'output_window#'
+
 # Names of subdirs for data and gnuplot output
 DIRNAME_DATA       = path.join(DIRNAME, 'data')
+DIRNAME_IMAGES     = path.join(DIRNAME, 'images')
 DIRNAME_OUT        = path.join(DIRNAME, 'output')
 DIRNAME_ERR        = path.join(DIRNAME, 'errors')
 
@@ -67,7 +85,7 @@ FILENAME_OUT       = 'gnuplot_out'
 FILENAME_ERR       = 'gnuplot_err'
 
 # Characters that are not allowed in filenames
-INVALID_CHARS      = ('\000', '/', '\\', '*', '!', '|','\"', '\'', '>', '<', '.', ',', '\n', '\t')
+INVALID_CHARS      = ('\000', '/', '\\', '*', '!', '|','\"', '\'', '>', '<', ',', '\n', '\t')
 # The invalid characters are substituted with this one
 SUBSTITUTE_CHAR    = '_'
 
