@@ -34,8 +34,9 @@ without knowing the specific gnuplot commands.  However, it is also possible
 to pass arbitrary commands to gnuplot, as described in the section
 `Sending arbitrary commands to gnuplot`_.
 
-All the examples given in this document have been tested, but errors are
-still possible.
+The examples given in this document can be executed by copying the expressions
+after *'>>>'* and pasting them in the python console command line. Although
+they have been tested, errors are still possible.
 
 The package is released under a GPL licence, in the hope it can be
 useful to someone else. Feeback, bugs reports, and suggestions are welcome.
@@ -82,7 +83,7 @@ or also
 >>> from gnuplot_manager import *
 
 .. note:: If you are using this module together with matplotlib, e.g. during an
-   ipython session opened with the *--pylab option*, it is recommended to import
+   ipython session opened with the *--pylab* option, it is recommended to import
    *gnuplot_manager* in its own namespace (using one of the two first methods
    listed above) to prevent any conflict with matplotlib functions and variable
    names. Efforts have been made to avoid the use of names that could
@@ -107,7 +108,7 @@ When the module is imported, it checks the availability of the gnuplot program
 and sets the global variable *gnuplot_installed* accordingly.
 This is achieved by means of a call to the program *which*, that should be
 installed in nearly all linux distributions. However, if it is not installed
-on your system, the *gnuplot_installed* variable is set to *None*.
+on your system, the *gnuplot_installed* variable is set to *None*:
 
 *gnuplot_installed=True*
   gnuplot is installed
@@ -118,10 +119,8 @@ on your system, the *gnuplot_installed* variable is set to *None*.
 *gnuplot_installed=None*
   *which* was not found, so the installation of gnuplot was not checked
 
-
 Example:
 
->>> import gnuplot_manager as gm
 >>> print(gm.gnuplot_installed)
 True
 
@@ -138,8 +137,13 @@ To open a new plot window, use the *new_plot()* function
 
 The function returns an instance of the *_PlotWindow* class.
 
-Note that the plot window do not appear on the screen until you plot
+Note that the plot window does not appear on the screen until you plot
 something on it.
+
+.. note:: In the following, the options of the *new_plot()* functions
+   are explained: if you want to learn immediately how to plot something,
+   jump to the `Plotting from data`_ or `Plotting mathematical functions`_
+   sections.
 
 You can specify 2 types of plot: '2D' and '3D', with '2D' as default.
 If you give a title to the window, giving the *title* argument,
@@ -160,19 +164,15 @@ Examples:
 >>> print(myplot3.error)
 (14, 'unknown plot type "4D", using default "2D"')
 
->>> myplot4 = gm.new_plot(plot_type='2D', xmin=1, xmax=0)
->>> print(myplot4.error)
-(30, 'parameters error: xmin must be lower than xmax')
-
-
 .. note:: If you have tried all the examples described up to now, you have
-   opened 4 plots, none of which has opened a window on the screen, since
-   there is nothing plotted yet.  If, at any time, you want to close all
-   the open plots, terminating the associated gnuplot terminals, you can use
-   the *plot_close_all()* function, described in the `Closing plot windows`_
-   section::
+   opened three *_PlotWindow* instances, none of which has opened a window on the screen,
+   since there is nothing plotted yet.  You can  close all the open plot windows,
+   terminating the associated gnuplot terminals, using the *plot_close_all()*
+   function, described in the `Closing plot windows`_  section:
      
    >>> gm.plot_close_all()
+   (0, 'Ok)
+   
 
 Persistence
 -----------
@@ -262,12 +262,24 @@ If you want to open a plot window using gnuplot defaults, you can pass the
 
 >>> myplot = gm.new_plot(gnuplot_default=True, title='Using gnuplot defaults')
 
+.. note:: if you have tried the examples above, it is better that you call the
+   *plot_close_all()* function to close all the plot windows opened in memory
+   (none of which has something plotted yet):
+
+   >>> gm.plot_close_all()
+   (0,'Ok')
+
 
 Plotting from data
 ==================
 
 Plotting 2D curves from data
 ----------------------------
+
+Before plotting 2D data, a 2D plot window must be opened first, as described
+in the `Creating a new plot window`_ section:
+
+>>> myplot2d = gm.new_plot(plot_type='2D', title='My 2D Plot')
 
 To plot 2D data, use the *plot2d()* function, passing the *_PlotWindow* 
 instance as first argument. The second and third arguments must be 
@@ -282,27 +294,22 @@ As an example, if the second and third argument are two arrays *x* and *y*:
 .. [#numbers] even single numbers, if you want to plot a single point.
 
 The third argument (optional) is a string to be used as label in the 
-plot legend. If provided, it is also included in the name of 
-the data file to which the values to be plotted are saved.
-Example:
+plot legend.  Example:
 
->>> myplot = gm.new_plot(plot_type='2D', title='My 2D Plot')
 >>> x = numpy.linspace(0,100,1001)
 >>> y = x * x
->>> gm.plot2d(myplot, x, y, label='y=x^2')
+>>> gm.plot2d(myplot2d, x, y, label='y=x^2')
 (0, 'Ok')
 
+.. image:: https://raw.githubusercontent.com/pietromandracci/gnuplot_manager/main/images/parabola-1.png
+
+github.com/pietromandracci/gnuplot_manager/blob raw.githubusercontent.com/pietromandracci/gnuplot_manager
+           
 a gnuplot window should appear on the screen, and a parabola should be
 plotted on it. The *plot2d()* function returns a tuple containing a
 number and a string: if there are no errors, the number is zero and
-the string is 'Ok', otherwise a number greater than zero and a string
-describing the error are returned.  As an example, if you open a plot
-window passing the *plot_type* argument '3D', and then try to plot
-on it using the *plot2d()* function, an error is returned:
-
->>> my3dplot = gm.new_plot(plot_type='3D', title='3D Plot')
->>> gm.plot2d(my3dplot, x, y)
-(24, 'invalid data type: 2D data on a 3D plot window')
+the string is *'Ok'*, otherwise a number greater than zero and a string
+describing the error are returned.
 
 The list of all the error messages is contained in the *error.py* module:
 
@@ -324,14 +331,29 @@ as the associated frequency. Example:
 >>> gm.plot2d(myhistogram, bins, freq, label='My frequency data')
 (0,'Ok')
 
-an histogram should be plotted.
+.. image:: https://raw.githubusercontent.com/pietromandracci/gnuplot_manager/main/images/histogram-1.png
+
+an histogram should be plotted. Note that, in this case, we have put
+the *x* and *y* values in lists, instead of numpy arrays, but we could
+have put them in tuples also, obtaining the same effect.
+
+You can set the 'histeps' style on an already opened 2D plot
+window  also, using the *plot_set()* function described in the
+`Changing the window properties`_ section.
     
 
 Plotting 3D data
 ----------------
 
-To plot 3D data, the plot window must have been opened with the option
-*plot_type = '3D'* and you have to use the *plot3d()* function.
+To plot 3D data, the plot window must be opened with the option
+*plot_type = '3D'*, as described in the `Creating a new plot window`_
+section:
+
+>>> myplot3d = gm.new_plot(plot_type='3D', title='3D Plot')
+
+then, the *plot3d()* function can be used to plot data on the window,
+passing the *_PlotWindow* instance as first argument, and the x, y and
+z values of the points to plot as the following arguments.
 
 The x, y and z values to be plotted must be stored in 
 unidimensional data structures of equal sizes, and contain the x, y,
@@ -344,50 +366,54 @@ the three arrays *x*, *y* and *z*:
 
 Example of 3D curve plot:
 
->>> my3dplot = gm.new_plot(plot_type='3D', title='My 3D plot')
 >>> x = numpy.linspace(0,100,1001)
 >>> y = numpy.linspace(0,200,1001)
 >>> z = x * y
->>> gm.plot3d(my3dplot, x, y, z, label='3D curve')
+>>> gm.plot3d(myplot3d, x, y, z, label='3D curve')
 (0, 'Ok')
 
+.. image:: https://raw.githubusercontent.com/pietromandracci/gnuplot_manager/main/images/3Dplot-1.png
+
 a 3D plot with a curve is plotted. If you click with the mouse on the window and move the pointer,
-you can rotate the axis, changing the point of view (this is made by gnuplot, not by this package).
+you can rotate the axes, changing the point of view (this is made by gnuplot, not by this package).
 
 In the previous example, a curve in 3D is plotted, not a surface, since only a single *y* value is given
 for each *x* value. To plot a surface, you must provide a set of *y* values for each *x* value, to form
-a grid of values on the *x-y* plane. Example of the points needed to plot a *z=x*y* surface on a grid
+a grid of values on the *x-y* plane. Example of the points needed to plot a *z=x+y* surface on a grid
 of 4 x 4 points::
    
-(x=0, y=0, z=0) (x=0, y=1, z=0) (x=0, y=2, z=0) (x=0, y=3, z=0)
-(x=1, y=0, z=0) (x=1, y=1, z=1) (x=1, y=2, z=2) (x=1, y=3, z=3)
-(x=2, y=0, z=0) (x=2, y=1, z=2) (x=2, y=2, z=4) (x=2, y=3, z=6)
-(x=3, y=0, z=0) (x=3, y=1, z=3) (x=3, y=2, z=6) (x=3, y=3, z=9)
+(x=0, y=0, z=0) (x=0, y=1, z=1) (x=0, y=2, z=2) (x=0, y=3, z=3)
+(x=1, y=0, z=1) (x=1, y=1, z=2) (x=1, y=2, z=3) (x=1, y=3, z=4)
+(x=2, y=0, z=2) (x=2, y=1, z=3) (x=2, y=2, z=4) (x=2, y=3, z=5)
+(x=3, y=0, z=3) (x=3, y=1, z=4) (x=3, y=2, z=5) (x=3, y=3, z=6)
 
 So the data to give to the *plot3d()* functions are:
 
 >>> x = numpy.array([0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3])
 >>> y = numpy.array([0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3])
->>> z = x * y
->>> gm.plot3d(my3dplot, x, y, z, label='Surface')
+>>> z = x + y
+>>> gm.plot3d(myplot3d, x, y, z, label='z = x  + y')
 (0, 'Ok')
 
-A grid of crosses should be plotted, which are points of the *z = x * y* surface.
+A grid of crosses should be plotted, which are points of the *z = x + y* surface:
+
+.. image:: https://raw.githubusercontent.com/pietromandracci/gnuplot_manager/main/images/3Dplot-2.png
 
 Adding more curves to a plot
 ----------------------------
 
 To add new data on the same plot, you must pass the *replot=True* argument:
 
->>> myplot = gm.new_plot(plot_type='2D', title='My 2D Plot')
 >>> x1 = numpy.linspace(0,100,1001)
 >>> y1 = x1 * x1
->>> gm.plot2d(myplot, x1, y1, label='My first 2D data')
+>>> gm.plot2d(myplot2d, x1, y1, label='My first 2D data')
 (0, 'Ok')
 >>> x2 = numpy.linspace(0,100,2001)
 >>> y2 = x2 * x2 * x2 / 100
->>> gm.plot2d(myplot, x2, y2, label='My second 2D data', replot=True)
+>>> gm.plot2d(myplot2d, x2, y2, label='My second 2D data', replot=True)
 (0, 'Ok')
+
+.. image:: https://raw.githubusercontent.com/pietromandracci/gnuplot_manager/main/images/plot2d-replot.png
 
 However, if you want to plot multiple curves on the same plot,
 it is more efficient to use the *plot_curves()* function described
@@ -399,19 +425,24 @@ Plotting several curves at the same time
 
 The function *plot_curves()* allows to plot several curves at one time,
 which is faster than plotting them one at a time using the *replot* option,
-since gnuplot is called only once.
+since gnuplot is called only once. Moreover, it lets you add a string with
+arbitrary options to give to gnuplot.
 
 Data to be plotted must be recorded in a list, each element of which
-is itself a list, made of 3 elements for 2D plots, or 4 elements for 3D ones.
+is itself a list, made of 4 elements for 2D plots, or 5 elements for 3D ones.
 
-For 2D plots, each list element has the form *[x, y, label]*, while for 3D
-plots it has the form *[x, y, z, label]*, where:
+For 2D plots, each list element has the form *[x, y, label, options]*, while for 3D
+plots it has the form *[x, y, z, label, options]*, where:
 
 - *x* is the array of x coordinates of the points to plot;
 - *y* is the array of y coordinates of the points to plot;
 - *z* is the array of z coordinates of the points to plot (only for 3D plots);
 - *label* is a string with the label to show in the plot legend,
   or *None* if you do not want a label to be set
+- *options* is a string with additional options you want to give to gnuplot, [#options]_
+  or *None* if you do not want to give them
+
+.. [#options] note that no check is made that the string contains valid gnuplot options.
 
 Examples:
 
@@ -421,40 +452,52 @@ Examples:
 >>> x2 = numpy.linspace(0, 100, 201)
 >>> y2 = 3 * x2
 >>> z2 = x2 * y2 / 10
->>> list2d = [ [x1, y1, 'my first data 2D'], [x2, y2, 'my second data 2D'] ]
->>> list3d = [ [x1, y1, z1, 'my first data 3D'], [x2, y2, z2, 'my second data 3D'] ]
+>>> list2d = [ [x1, y1, 'my first data 2D', None], [x2, y2, 'my second data 2D', 'with lines'] ]
+>>> list3d = [ [x1, y1, z1, 'my first data 3D', None], [x2, y2, z2, 'my second data 3D', 'with linespoints'] ]
 
 The first argument passed to *plot_curves()* must be the plot on which 
 you want to operate, while the second is the list:
 
->>> my2dplot = gm.new_plot(plot_type = '2D', title='My 2D plot')
->>> gm.plot_curves(my2dplot, list2d)
+>>> gm.plot_curves(myplot2d, list2d)
 (0, 'Ok')
->>> my3dplot = gm.new_plot(plot_type = '3D', title='My 3D plot')
->>> gm.plot_curves(my3dplot, list3d)
+
+.. image:: https://raw.githubusercontent.com/pietromandracci/gnuplot_manager/main/images/plot_curves-1.png
+
+>>> gm.plot_curves(myplot3d, list3d)
 (0, 'Ok')
+
+.. image:: https://raw.githubusercontent.com/pietromandracci/gnuplot_manager/main/images/plot_curves-2.png
 
 You can also use the function *plot_curves()* to plot a single curve, but the list
-must have a single element, which is itself a list of 3 or 4 elements, 
+must have a single element, which is itself a list of 4 or 5 elements, 
 so do not forget to put *double square brackets*:
 
->>> my2dplot = gm.new_plot(plot_type = '2D', title='My 2D plot')
->>> x1 = numpy.linspace(0,100,1001)
+>>> x1 = numpy.linspace(0,100,101)
 >>> y1 = x1 * x1
->>> gm.plot_curves(my2dplot, [ [ x1, y1, 'only one curve'] ])
+>>> gm.plot_curves(myplot2d, [ [ x1, y1, 'only one curve', None] ])
 (0, 'Ok')
+
+.. image:: https://raw.githubusercontent.com/pietromandracci/gnuplot_manager/main/images/plot_curves-3.png
 
 You can specify the *replot=True* option in the *plot_curves()* function also,  
 if you want to add the new curves to the previously plotted ones.
 Example:
 
->>> list2da = [ [x1, y1, 'my first data 2D'], [x2, y2, 'my second data 2D'] ]
->>> list2db = [ [x1, 2*y1, 'my third data 2D'], [x2, 2*y2, 'my fourth data 2D'] ]
->>> my2dplot = gm.new_plot(plot_type = '2D', title='My 2D plot')
->>> gm.plot_curves(my2dplot, list2da)
+>>> x1 = numpy.linspace(0,3.14, 101)
+>>> y1 = numpy.sin(x1)
+>>> x2 = numpy.linspace(0,3.14, 51)
+>>> y2 = numpy.cos(x2)
+>>> list2da = [ [x1, y1, 'my first data 2D', None], [x2, y2, 'my second data 2D', None] ]
+>>> list2db = [ [x1, 2*y1, 'my third data 2D', None], [x2, 2*y2, 'my fourth data 2D', None] ]
+>>> gm.plot_curves(myplot2d, list2da)
 (0, 'Ok')
->>> gm.plot_curves(my2dplot, list2db, replot=True)
+
+.. image:: https://raw.githubusercontent.com/pietromandracci/gnuplot_manager/main/images/plot_curves-4.png
+
+>>> gm.plot_curves(myplot2d, list2db, replot=True)
 (0, 'Ok')
+
+.. image:: https://raw.githubusercontent.com/pietromandracci/gnuplot_manager/main/images/plot_curves-5.png
 
 Data files
 ----------
@@ -489,16 +532,29 @@ Plotting mathematical functions
 Plotting a mathematical expression
 ----------------------------------
 
+If you have not opened a 2D plot window yet (e.g. because you have jumped
+to this section from the index), you should do it now, using the *new_plot()*
+function described in the `Creating a new plot window`_ section:
+
+>>> myplot2d = gm.new_plot(plot_type='2D', title='My 2D Plot')
+
 The function *plot_function()* allows to pass to gnuplot a string, representing
 a mathematical function.
 
->>> my2dplot = gm.new_plot()
->>> gm.plot_function(my2dplot, 'sin(x)', label='sin(x)')
-(0, 'Ok')
->>> my3dplot = gm.new_plot(plot_type='3D')
->>> gm.plot_function(my3dplot, 'sin(x)*cos(y)', label='sin(x)*cos(y)')
+>>> gm.plot_function(myplot2d, 'sin(x)', label='sin(x)')
 (0, 'Ok')
 
+.. image:: https://raw.githubusercontent.com/pietromandracci/gnuplot_manager/main/images/plot_function-1.png
+
+To plot a 3D function, you must open a 3D plot window, if you don't have done
+it yet:
+
+>>> myplot3d = gm.new_plot(plot_type='3D', title='My 3D Plot')
+
+>>> gm.plot_function(myplot3d, 'sin(x)*cos(y)', label='sin(x)*cos(y)')
+(0, 'Ok')
+
+.. image:: https://raw.githubusercontent.com/pietromandracci/gnuplot_manager/main/images/plot_function-2.png
 
 If the *label* argument is not given or is set to *None*, gnuplot will automatically
 use the function string as a label for the plot legend. If you don't want any label to be shown,
@@ -517,31 +573,41 @@ that was previously plotted on the window.
 You can use the *replot=True* option to plot the function
 on top of what was plotted before
 
->>> myplot = gm.new_plot()
->>> gm.plot_function(myplot, 'x*x',   label='y=x^2')
+>>> gm.plot_function(myplot2d, 'x*x', label='y=x^2')
 (0, 'Ok')
->>> gm.plot_function(myplot, '2*x*x', label='y=2x^2', replot=True)
+>>> gm.plot_function(myplot2d, '2*x*x', label='y=2x^2', replot=True)
 (0, 'Ok')
+
+.. image:: https://raw.githubusercontent.com/pietromandracci/gnuplot_manager/main/images/plot_functions-1.png
 
 Plotting several mathematical expressions
 -----------------------------------------
 
 The function *plot_functions()* allows to plot an arbitrary number of
-mathematical expression in a single plot operation. 
+mathematical expression in a single plot operation, and allows to give a string
+with additional gnuplot options for each of them. 
 
 The expression to be plotted must be recorded in a list, each element of which
-is itself a list of 2 strings: the first one is the math expression, the
-second is the label to be shown on the plot legend:
+is itself a list of 3 strings:
 
->>> list2d = [ ['x*x', 'y=x^2'],  ['2*x*x', 'y=2x^2'] ]
->>> my2dplot = gm.new_plot()
->>> gm.plot_functions(my2dplot, list2d)
+- the first one is the math expression;
+- the second is the label to be shown on the plot legend;
+- the third contains additional options you want to give to gnuplot, [#options2]_
+  or *None* if you do not want to give them.
+
+.. [#options2] note that no check is made that the string contains valid gnuplot options.  
+
+>>> list2d = [ ['x*x', 'y=x^2', 'with lines'],  ['2*x*x', 'y=2x^2','with points'] ]
+>>> gm.plot_functions(myplot2d, list2d)
 (0, 'Ok')
 
->>> list3d = [ ['sin(x)*cos(y)', 'z=sin(x)cos(y)'], ['2*sin(x)*cos(y)', 'z=2sin(x)cos(y)'] ]
->>> my3dplot = gm.new_plot(plot_type='3D')
->>> gm.plot_functions(my3dplot, list3d)
+.. image:: https://raw.githubusercontent.com/pietromandracci/gnuplot_manager/main/images/plot_functions-2.png
+
+>>> list3d = [ ['sin(x)*cos(y)', 'z=sin(x)cos(y)', None], ['2*sin(x)*cos(y)', 'z=2sin(x)cos(y)', None] ]
+>>> gm.plot_functions(myplot3d, list3d)
 (0, 'Ok')
+
+.. image:: https://raw.githubusercontent.com/pietromandracci/gnuplot_manager/main/images/plot_functions-3.png
 
 If you don't want to set labels manually, put *None* in their place and gnuplot
 will automatically create them, or put "" (empty string) and they will not be set.
@@ -551,9 +617,80 @@ deleting anything was plotted before.
 
 A single math expression can be plotted also (remember double square brackets):
 
->>> myplot = gm.new_plot()
->>> gm.plot_functions(myplot, [ ['x*x', 'y=x^2'] ])
+>>> gm.plot_functions(myplot2d, [ ['x*x', 'y=x^2', None] ])
 (0, 'Ok')
+
+.. image:: https://raw.githubusercontent.com/pietromandracci/gnuplot_manager/main/images/plot_functions-4.png
+           
+
+Checking window properties
+==========================
+
+Printing information on a plot window 
+--------------------------------------
+
+The *plot_check()* function prints information about the plot window
+given as argument: 
+
+>>> myplot = gm.new_plot(plot_type='2D', title='2D plot')
+>>> x = numpy.linspace(0,100,101)
+>>> y = x * x
+>>> gm.plot2d(myplot, x, y, label='y=x^2')
+(0, 'Ok')
+>>> gm.plot_function(myplot, 'x**2', replot=True)
+(0, 'Ok')
+>>> gm.plot_check(myplot)
+Window number:        0
+Terminal type:        "x11"
+Persistence:          "False"
+Window type:          "2D"
+Window title:         "2D plot"
+Number of functions:  1
+Number of curves:     1
+X-axis range:         [None,None]
+Y-axis range:         [None,None]
+(0, 'Ok')
+
+
+If the *expanded=True* argument is given, it prints more information,
+including the PID of the gnuplot process and the names of the
+datafiles:
+
+>>> gm.plot_check(myplot, expanded=True)
+Window number:        0
+Terminal type:        "x11"
+Persistence:          "False"
+Window type:          "2D"
+Window title:         "2D plot"
+Number of functions:  1
+Number of curves:     1
+X-axis range:         [None,None]
+Y-axis range:         [None,None]
+Gnuplot process PID:  103667
+Gnuplot output file:  "/dev/stdout"
+Gnuplot errors file:  "/dev/stderr"
+Functions
+#  0: "x**2"
+Curves
+#  0: "gnuplot.out/data/gnuplot_data_w0_2D(2D plot)_c0(y=x^2).csv"
+(0,'Ok')     
+
+
+The function takes two more arguments:
+
+*printout* (default is *True*): 
+    if set to *True*, the output is printed on console 
+*getstring* (default is *False*): 
+    if set to *True*, a string with the output is returned. 
+    This can be useful to write the output to a file or inside a GUI window.            
+
+
+Printing inforrmation on all plot windows
+-----------------------------------------
+
+The *plot_list()* function prints the same information given by the
+*plot_check()* function  for all open windows. 
+
 
 Closing plot windows
 ====================
@@ -577,11 +714,9 @@ The name given to the *_PlotWindow* instance (e.g. *myplot*) is not removed
 from the namespace. However, if you try to pass it to any function of the package,
 an error message is returned:
 
->>> myplot = gm.new_plot()
-(0, 'Ok')
->>> gm.plot_close(myplot)
+>>> gm.plot_close(myplot2d)
 (0. 'Ok')
->>> gm.plot_function(myplot, 'x**2')
+>>> gm.plot_function(myplot2d, 'x**2')
 (11, 'trying to operate on a closed plot window')
 
 Note that if you create a plot window with a name (e.g. *myplot*) and then
@@ -616,7 +751,7 @@ linked to that name (*myplot*) anymore. Example::
    (0, 'Ok')
 
 Here we have used the *plot_list()* function, which is described in the
-`Checking the window properties`_ section, to list all the open windows.
+`Checking window properties`_ section, to list all the open windows.
 Now we have two plot windows, one 2D and one 3D, but only the second one
 is linked to the name *myplot*, while the first one is not linked anymore
 to any name. However, the first window is still present in the *window_list*
@@ -656,7 +791,10 @@ to the *plot_close()* or *plot_close_all()* function:
 If the plot was opened passing the *redirect_output=True* argument, then
 the files on which the gnuplot output has been redirected will be deleted as well.
 
-The default behavior is stored in the *PURGE_FILES* global variable.
+The default behavior is stored in the *PURGE_FILES* global variable:
+
+>>> print(gm.PURGE_FILES)
+False
 
 The optional *delay* parameter specifies a time (in seconds) to wait before
 deleting the data files, after the *quit* command has been sent to gnuplot.
@@ -765,6 +903,8 @@ You can print an arbitrary string on the plot window using the *plot_label()* fu
 >>> gm.plot_function(myplot,'x**2')
 (0, 'Ok')
 
+.. image:: https://raw.githubusercontent.com/pietromandracci/gnuplot_manager/main/images/plot_label-1.png
+
 x and y are the position at which the string must be printed, expressed in 
 characters, starting from the lower-left angle (x=1,y=1) of the graph.
 The erase option removes all previously printed strings before 
@@ -783,69 +923,58 @@ will work only if some plots or curves have been plotted before
 >>> gm.plot_label(myplot, x=50, y=20, label='Hello !', erase=False, replot=True)
 (0, 'Ok')
 
+.. image:: https://raw.githubusercontent.com/pietromandracci/gnuplot_manager/main/images/plot_label-2.png
+
 Read the function docstring for more details:
 
 >>> help(gm.plot_label)
 
 
-Checking the window properties
-------------------------------
+Exporting a plot window to a file
+---------------------------------
 
-The *plot_check()* function prints information about the plot window
-given as argument: 
+A plot can be exported to a file in various formats using the
+*plot_print()* function. The first argument passed must be the
+*_PlotWindow* instance of the plot you want to export, followed
+by: the terminal used to create the image, the filename and a string
+with additional options to pass to gnuplot.
 
->>> myplot = gm.new_plot(plot_type='2D', title='2D plot')
->>> x = numpy.linspace(0,100,101)
->>> y = x * x
->>> gm.plot2d(myplot, x, y, label='y=x^2')
-(0, 'Ok')
->>> gm.plot_function(myplot, 'x**2', replot=True)
-(0, 'Ok')
->>> gm.plot_check(myplot)
-Window number:        0
-Terminal type:        "x11"
-Persistence:          "False"
-Window type:          "2D"
-Window title:         "2D plot"
-Number of functions:  1
-Number of curves:     1
-X-axis range:         [None,None]
-Y-axis range:         [None,None]
+>>> myplot = gm.new_plot()
+>>> gm.plot_function(myplot, 'cos(x)')
+(0,'Ok')
+>>> gm.plot_print(myplot, terminal='png', filename='cosx.png', options='background \"#c0c000\"')
 (0, 'Ok')
 
+The file *cosx.png* is created in the *gnuplot.out/images/* directory, with the following image:
 
-If the *expanded=True* argument is given, it prints more information,
-including the PID of the gnuplot process and the names of the
-datafiles:
+.. image:: https://raw.githubusercontent.com/pietromandracci/gnuplot_manager/main/images/cosx.png
+           
+If the filename is not given, a default name is given to the
+output file, in the form:
 
->>> gm.plot_check(myplot, expanded=True)
-Window number:        0
-Terminal type:        "x11"
-Persistence:          "False"
-Window type:          "2D"
-Window title:         "2D plot"
-Number of functions:  1
-Number of curves:     1
-X-axis range:         [None,None]
-Y-axis range:         [None,None]
-Gnuplot process PID:  103667
-Gnuplot output file:  "/dev/stdout"
-Gnuplot errors file:  "/dev/stderr"
-Functions
-#  0: "x**2"
-Curves
-#  0: "gnuplot.out/data/gnuplot_data_w0_2D(2D plot)_c0(y=x^2).csv"
-(0,'Ok')     
+*output_window#<n>.<ext>*
 
-The *plot_list()* function does the same for all open windows. 
+- *<n>* is the window number (*window_number* attribute of the
+  *_PlotWindow* instance)
+- *<ext>* is a standard extension depending on the terminal,
+  (e.g. '.png' for png terminal).
 
-Both functions take two more arguments:
+The default terminal is stored in the global variable *DEFAULT_PRINT_TERM*,
+while the list of allowed terminals is stored in *PRINT_TERMINALS*:
 
-*printout* (default is *True*): 
-    if set to *True*, the output is printed on console 
-*getstring* (default is *False*): 
-    if set to *True*, a string with the output is returned. 
-    This can be useful to write the output to a file or inside a GUI window.  
+>>> print(gm.DEFAULT_PRINT_TERM)
+png
+>>> print(gm.PRINT_TERMINALS)
+('png', 'jpeg', 'eps', 'gif', 'svg', 'latex', 'postscript', 'pdfcairo', 'dumb')
+
+You can also export all the open plot windows at once, using the *plot_print_all()*
+function. In this case, however, the default filenames are used, and the options,
+if given, are the same for all the windows.
+
+Read the function docstring for more datails:
+
+>>> help(gm.plot_print)
+
   
 Sending arbitrary commands to gnuplot
 -------------------------------------
@@ -866,12 +995,10 @@ a plot window using the *plot_command()* function:
 List of available functions
 ===========================
 
-For a complete description of the available functions:
+Read the doctrings for a complete description of each function.
 
->>> help(gm.functions)
-
-Create and modify plot windows
-------------------------------
+Create, modify, and close plot windows
+--------------------------------------
 
 *new_plot()*
     create a new plot window
@@ -879,6 +1006,10 @@ Create and modify plot windows
     modify some properties of a previously created window
 *plot_command()*
     send a command to the gnuplot process
+*plot_close()*
+    close the plot window and terminate the gnuplot process
+*plot_close_all()*
+    close all the plot windows and terminate all the gnuplot processes 
 
 
 Plot data
@@ -898,6 +1029,16 @@ Plot mathematical functions
     plot a mathematical expression
 *plot_functions()*
     plot several mathematical expression at once
+
+
+Print plots to files
+--------------------
+
+*plot_print()*
+    export a plot to a file
+
+*plot_print_all()*
+    export to files all the open plots
 
 
 Reset, clear and refresh plots
@@ -935,10 +1076,6 @@ Utility functions
     print the plot properties
 *plot_list()*
     print the properties of all plots
-*plot_close()*
-    close the plot window and terminate the gnuplot process
-*plot_close_all()*
-    close all the plot windows and terminate all the gnuplot processes 
 
 
 The *_PlotWindow* class
