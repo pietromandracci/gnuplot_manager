@@ -38,8 +38,18 @@ The examples given in this document can be executed by copying the expressions
 after *'>>>'* and pasting them in the python console command line. Although
 they have been tested, errors are still possible.
 
+.. note:: If the package has been correctly installed, a test script can be run from
+   the system terminal by::
+
+   $ python -m gnuplot_manager.test
+
+   or inside the python console by::
+
+   >>> from gnuplot_manager.test import main
+   >>> main()
+
 The package is released under a GPL licence, in the hope it can be
-useful to someone else. Feeback, bugs reports, and suggestions are welcome.
+useful to someone else. Feeback, bug reports, and suggestions are welcome.
 
 
 Package structure

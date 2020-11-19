@@ -1,3 +1,10 @@
+=============
+Version 0.1.2
+=============
+
+Added the test script *test.py*
+
+=============
 Version 0.1.1
 =============
 
@@ -24,7 +31,7 @@ Bug fixies
   since the z coordinate of the label was fixed to zero,
   now it is 1 for 3D graphs
 
-Ducumentation
+Documentation
 -------------
 
 - The *README.rst* file was updated, and figures were added to it

@@ -16,10 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy
-try:
-    from .functions import *
-except ImportError:
-    from functions import *
+from .functions import *
 
 def wait():
     return input('Press RETURN to continue...\n')

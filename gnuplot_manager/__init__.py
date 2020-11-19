@@ -20,13 +20,19 @@
 This package allows to plot data or mathematical expressions inside python,
 using the gnuplot program, in the form of 2D or 3D plots.
 
+If the package has been correctly installed, a test script can be run from
+the system terminal by::
+
+$ python -m gnuplot_manager.test
+
+or inside the python console by::
+
+>>> from gnuplot_manager.test import main
+>>> main()
+
 Full documentation can be found at:
 
 https://github.com/pietromandracci/gnuplot_manager
-
-To run a test script type::
-
-$ python3 -m gnuplot_manager.test
 
 
 List of available functions
