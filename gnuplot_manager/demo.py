@@ -15,6 +15,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+""" This is a small demo script, to show the main features of this package.
+
+    If the package has been correctly installed, you should be able to run 
+    this script from the system terminal by typing::
+
+    $ python -m gnuplot_manager.demo
+
+    or inside the python console by typing::
+
+    >>> from gnuplot_manager.demo import main
+    >>> main()
+
+    The demo will run without need of input and last about 35 seconds.    
+"""
+
+
+
 from time import sleep
 import numpy
 from .functions import *

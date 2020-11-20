@@ -20,15 +20,17 @@
 This package allows to plot data or mathematical expressions inside python,
 using the gnuplot program, in the form of 2D or 3D plots.
 
-If the package has been correctly installed, a test script can be run from
-the system terminal by::
+.. note:: If the package has been correctly installed, a small demo script can
+   be run from the system terminal by typing::
 
-$ python -m gnuplot_manager.test
+   $ python -m gnuplot_manager.demo
 
-or inside the python console by::
+   or inside the python console by typing::
 
->>> from gnuplot_manager.test import main
->>> main()
+   >>> from gnuplot_manager.demo import main
+   >>> main()
+
+   The demo will run without need of input and last about 35 seconds.
 
 Full documentation can be found at:
 
@@ -64,6 +66,7 @@ Plot data
     plot a curve from 3d data
 *plot_curves()*
     plot several curves at the same time
+
 
 Plot mathematical functions
 ---------------------------
@@ -128,7 +131,7 @@ Each plot window is an instance of the *_PlotWindow* class,
 which has several attributes:
 
 *self.window_number*:   
-    an integer number that identifies the plot window,                               
+    an integer number that identifies the plot window, [#window_number]_                               
     mainly used to generate unique names for the data files
 *self.gnuplot_process*: 
      gnuplot process (instance of *subprocess.Popen*)    
@@ -167,6 +170,10 @@ which has several attributes:
 *self.error*:
      if there was an error while opening the plot
      an error message is stored here
+
+.. [#window_number] Note that this number is *not* the index that identifies the
+   plot window inside the *window_list* variable: in fact the former is fixed,
+   while the latter may change when other windows are removed from the list.
 
 .. [#functions] Note that no check is made that function strings given to gnuplot 
    are correct. So even wrong ones (which therefore gnuplot has not plotted)

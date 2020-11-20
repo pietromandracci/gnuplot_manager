@@ -15,6 +15,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
+""" This script is intended to test the functions module.
+
+    If the package has been correctly installed, you should be able to run 
+    this script from the system terminal by typing::
+
+    $ python -m gnuplot_manager.test
+
+    or inside the python console by typing::
+
+    >>> from gnuplot_manager.test import main
+    >>> main()
+"""
+
 import numpy
 from .functions import *
 

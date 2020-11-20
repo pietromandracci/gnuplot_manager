@@ -6,7 +6,7 @@ Documentation & testing
 -----------------------
 
 - the *README.rst* file was updated
-- the *test.py* scritp was updated
+- the *test.py* script was updated
 - the *demo.py* script was added
 - the *__init__* docstring was updated
 

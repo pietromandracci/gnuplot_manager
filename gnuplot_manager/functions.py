@@ -14,7 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-""" Functions used to plot data on plot windows and to do other tasks """
+""" Functions used to plot data on plot windows and to do other tasks. """
 
 from os import remove, path, mkdir
 from time import sleep
@@ -550,7 +550,6 @@ def plot_functions(plot_window, func_list, replot=False):
 # | Functions to print plots to file |
 # +----------------------------------+
 
-
 def plot_print(plot_window,
                terminal=DEFAULT_PRINT_TERM,
                filename=None,
@@ -1054,9 +1053,7 @@ def plot_check(plot_window, expanded=False, printout=True, getstring=False):
         if plot_window.data_filenames: 
             string += 'Curves\n'            
             for i in range(len(plot_window.data_filenames)):
-                string += '#' + str(i).rjust(3) + ': \"' + plot_window.data_filenames[i] +'\"' + '\n'                
-    string += '\n'
-
+                string += '#' + str(i).rjust(3) + ': \"' + plot_window.data_filenames[i] +'\"' + '\n'
     if printout: print(string)
 
     if getstring: return string
@@ -1109,6 +1106,7 @@ def plot_list(expanded=False, printout=True, getstring=False):
     string = ''
     for plot_window in window_list:
         string += plot_check(plot_window, expanded, False, True)
+        string += '\n'
 
     if printout: print(string)
      
