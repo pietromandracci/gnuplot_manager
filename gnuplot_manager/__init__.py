@@ -205,8 +205,6 @@ of the *functions.py* module to perform their tasks:
    *functions.py* module, these methods are not intended to be called directly.
 """
 
-__version__ = '0.1.1'
-
 from .global_variables import *
 from .functions import *
 
