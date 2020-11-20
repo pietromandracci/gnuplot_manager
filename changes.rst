@@ -1,8 +1,24 @@
 =============
+Version 0.1.3
+=============
+
+Documentation & testing
+-----------------------
+
+- the *README.rst* file was updated
+- the *test.py* scritp was updated
+- the *demo.py* script was added
+- the *__init__* docstring was updated
+
+  
+=============
 Version 0.1.2
 =============
 
+Documentation & testing
+-----------------------
 Added the test script *test.py*
+
 
 =============
 Version 0.1.1
