@@ -21,6 +21,7 @@ from time import sleep
 
 from .global_variables import *
 from .errors import *
+from .funcutils import *
 
 
 # +---------+
@@ -141,6 +142,7 @@ class _PlotWindow:
         # and functon strings will be stored
         self.data_filenames = []
         self.functions      = []
+        self.n_volatiles    = 0
 
         # Initialize the axis ranges
         self.xmin = None
@@ -168,10 +170,10 @@ class _PlotWindow:
                                            + '_w_' + str(self.window_number) )
             if self.title is not None:
                 self.filename_out += ( '('
-                                       + self._correct_filename(self.title)
+                                       + correct_filename(self.title)
                                        + ')' )
                 self.filename_err += ( '('
-                                       + self._correct_filename(self.title)
+                                       + correct_filename(self.title)
                                        + ')' )
             self.gnuplot_process = Popen(exec_list,
                                          stdin=PIPE,
@@ -200,7 +202,7 @@ class _PlotWindow:
                 command_string += ' ' + str(options)
             self._command(command_string)
         if title is not None:
-            self._command('set title \"' + self._correct_filename(self.title)
+            self._command('set title \"' + correct_filename(self.title)
                           + '\"')
             
             
@@ -235,90 +237,8 @@ class _PlotWindow:
             self.gnuplot_process.kill()
             gnuplot_last_output = self.gnuplot_process.communicate()
 
-        return gnuplot_last_output                
-
-
-    def _correct_filename(self, filename):
-        """ Remove invalid characters from a filename.
-
-            If the string contains characters in INVALID_CHARS, they are
-            substituted with the char in SUBSTITUTE_CHAR.
-
-            Parameters
-            ----------
-
-            filename: a string, representive a filename
-
-            Returns
-            -------
-
-            The modified string
-        """
-
-        for c in INVALID_CHARS:
-            filename = filename.replace(c, SUBSTITUTE_CHAR)
-
-        return filename
-    
+        return gnuplot_last_output                    
         
-    def _data_file_2d(self, x_data, y_data, filename, sep=SEP, eol=EOL):
-        """ Create a file and write 2d data to it in csv format.
-
-            The file will contain data in ascii format, in the form:
-
-            x1  y1
-            x2  y2
-            ..  ..
-
-            Parameters
-            ----------
-
-            x_data:   data representing x coordinates of the points to plot
-            y_data:   data representing y coordinates of the points to plot
-            filename: the name of the data file to be created
-            sep:      separator character between colums (vaues in a line)
-            eol:      end-of-line character
-        """
-         
-        data_file = open(filename, 'w') 
-        for i in range(len(x_data)):
-            data_file.write( str(x_data[i])
-                             + sep
-                             + str(y_data[i])
-                             + eol )
-        data_file.close()
-
-
-    def _data_file_3d(self, x_data, y_data, z_data, filename, sep=SEP, eol=EOL):
-        """ Create a file and write 3d data to it in csv format.
-
-            The file will contain data in ascii format, in the form:
-
-            x1  y1  z1
-            x2  y2  z2
-            ..  ..  ..
-
-            Parameters
-            ----------
-
-            x_data:   data representing x coordinates of the points to plot
-            y_data:   data representing y coordinates of the points to plot
-            z_data:   data representing z coordinates of the points to plot
-            filename: the name of the data file to be created
-            sep:      separator character between colums (vaues in a line)
-            eol:      end-of-line character
-        """
-         
-        data_file = open(filename, 'w') 
-        for i in range(len(x_data)):
-            data_file.write(  str(x_data[i])
-                              + sep
-                              + str(y_data[i])
-                              + sep
-                              + str(z_data[i])                                
-                              + eol )
-        data_file.close()
-
 
     def _add_functions(self, function_list, replot=False):
         """ Add one or more functions to a plot window.
@@ -347,6 +267,8 @@ class _PlotWindow:
 
         (status, message) = NOERROR
 
+        if (self.n_volatiles and replot):
+            return ERROR_REPLOT_VOLATILE
         if not function_list: return ERROR_NO_FUNCTION 
         if (replot and (not self.data_filenames) and (not self.functions)):
             return ERROR_NO_REPLOT           
@@ -364,7 +286,8 @@ class _PlotWindow:
         if not replot:
             self.data_filenames.clear()
             self.functions.clear()
-
+            self.n_volatiles = 0
+            
         # Beginning of the command string to send to gnuplot
         if replot:                     command_string = 'replot '
         elif (self.plot_type == '3D'): command_string = 'splot '
@@ -394,21 +317,28 @@ class _PlotWindow:
         return status, message        
         
 
-    def _add_curves(self, data_list, replot=False):
+    def _add_curves(self, data_list, volatile=False, replot=False):
         """ Add one or more curves from data to the plot window. 
 
             Parameters
             ----------
 
             data_list:    a list in one of the following forms:
-                          2D data: [ [x1 , y1, label1, options1],     
-                                     [x2,  y2, label2, options1]     ... ]
-                          3D data: [ [x1,  y1, z1, label1, options1], 
-                                     [x2,  y2, z2, label2, options2], ... ] 
+                          2D data: [ [x1 ,  y1, label1, options1],     
+                                     [x2,   y2, label2, options2],... ]
+                          3D data: [ [x1,   y1, z1, label1, options1], 
+                                     [x2,   y2, z2, label2, options2], ... ] 
                           where:
                           - x1 contains the x-coordinates of the points to plot
+                            can be None if the data to give are not 2D, as in 
+                            the case of boxplots, or if you want gnuplot to 
+                            automatically provide x-values
+                            Plots with and without x values can be mixed:
+                            [ [x1,   y1, label1, options1],     
+                              [None, y2, label2, options2],... ]  
                           - y1 contains the y-coordinates of the points to plot 
                           - z1 contains the z-coordinates of the points to plot  
+                            (for 3D plot windows only)
                           - label1 is a string, that will be used to identify the plot 
                             in the legend, or None
                           - options1 is a string, containing additional options
@@ -416,6 +346,8 @@ class _PlotWindow:
                           The form must be consisted with the type of plot 
                           that was defined at the plot window creation, 
                           otherwise an error message is returned
+            volatile:     if True, the data are not written to file, but sent 
+                          to gnuplot as volatile data using the special filename '-'
             replot:       if True, the curves are plotted without erasing 
                           previously plotted ones
 
@@ -427,24 +359,41 @@ class _PlotWindow:
 
         (status, message) = NOERROR
 
+        if (self.n_volatiles and replot):
+            return ERROR_REPLOT_VOLATILE      
         if not data_list: return ERROR_NO_DATA
         if (replot and (not self.data_filenames) and (not self.functions)):
             return ERROR_NO_REPLOT
         
         # Check consistency of the whole list
         for i in range(len(data_list)):
-            # Transform single numbers to lists
-            try:
-                len_x = len(data_list[i][0])
-            except TypeError:
-                data_list[i][0] = [ data_list[i][0] ]
-                len_x = 1
+            # Check if xdata are missing in this item
+            xmissing = False
+            if (data_list[i][0] is None):
+                xmissing = True
+                len_x = None
+                # Missing x-data are not allowed in 3D plots
+                if (self.plot_type == '3D'):
+                    (status, message) = ERROR_WRONG_TYPE
+                    if (len(data_list) > 1): message += ' in list item # ' + str(i)
+                    message += ': missing x-data in a 3D plot window'
+                    return status, message
+            else:
+                # Transform single x-numbers to lists
+                try:
+                    len_x = len(data_list[i][0])
+                except TypeError:
+                    data_list[i][0] = [ data_list[i][0] ]
+                    len_x = 1
+            # Transform single y-numbers to lists        
             try:
                 len_y = len(data_list[i][1])
             except TypeError:
                 data_list[i][1] = [ data_list[i][1] ]
                 len_y = 1
-            if self.n_axes == 3:
+            # For a 3D plot, Check z values also
+            if (self.n_axes == 3):
+                # Transform single z-numbers to lists
                 try:
                     len_z = len(data_list[i][2])
                 except TypeError:
@@ -457,17 +406,17 @@ class _PlotWindow:
                              + ' items expected, given '
                              + str(len(data_list[i])) )
                 return (status, message)
-            elif (len_x != len_y):
+            elif ( (not xmissing) and (len_x != len_y) ):
                 (status, message) = ERROR_PLOT_PARAMETERS
                 if len(data_list) > 1:  message += ' in list item # ' + str(i)
                 message += ': x and y data have different sizes'
                 return status, message
-            elif (self.n_axes == 3) and (len_z != len_x):
+            elif ( (self.n_axes == 3) and (len_z != len_y) ):
                 (status, message) = ERROR_PLOT_PARAMETERS
                 if len(data_list) > 1:  message += ' in list item # ' + str(i)
-                message += ': x, y and z data have different sizes'
+                message += ': y and z data have different sizes'
                 return status, message               
-            elif (len_x == 0):
+            elif (len_y == 0):
                 (status, message) = ERROR_PLOT_PARAMETERS
                 if len(data_list) > 1: message += ' in list item # ' + str(i)
                 message += ': zero size data given'
@@ -477,6 +426,7 @@ class _PlotWindow:
         if not replot:
             self.data_filenames.clear()
             self.functions.clear()
+            self.n_volatiles = 0
         
         # Beginning of the command string to send to gnuplot
         if replot:                     command_string = 'replot '
@@ -485,11 +435,8 @@ class _PlotWindow:
 
         # Number of curves before adding the new ones
         n_curves = len(self.data_filenames)          
-        for i in range(len(data_list)):
-            
-            # This number is used to create a unique filename for each curve
-            curve_number = n_curves + i
-            
+        for i in range(len(data_list)):         
+                        
             # Read the curve label, if given
             if (data_list[i][self.n_axes] is None):
                 label = None
@@ -502,32 +449,46 @@ class _PlotWindow:
             else:
                 options = str(data_list[i][self.n_axes+1])
                         
-            # Define the unique filename for the data file of this curve
-            string = FILENAME_DATA 
-            string += '_w' + str(self.window_number)
-            if (self.plot_type == '3D'): string += '_3D'
-            else:                        string += '_2D'        
-            if self.title is not None:
-                string += '(' + self._correct_filename(self.title) + ')'
-            string += '_c' + str(curve_number)
-            if label is not None:
-                string += '(' + self._correct_filename(label) + ')' 
-            string += FILENAME_DATA_EXT
-            filename = path.join( DIRNAME_DATA, string )  
- 
-            # Add filename to the list
-            self.data_filenames.append(filename)
-
-            # Write data to the file
-            if self.plot_type == '3D':
-                self._data_file_3d( data_list[i][0],
-                                    data_list[i][1],
-                                    data_list[i][2],
-                                    filename )
+            # Define the unique filename for the data file
+            if volatile:
+                filename = FILENAME_VOLATILE
             else:
-                self._data_file_2d( data_list[i][0],
-                                    data_list[i][1],
-                                    filename )
+                curve_number = n_curves + i
+                string = FILENAME_DATA 
+                string += '_w' + str(self.window_number)
+                if (self.plot_type == '3D')   : string += '_3D'
+                elif (data_list[i][0] is None): string += '_1D'
+                else:                           string += '_2D'        
+                if self.title is not None:
+                    string += '(' + correct_filename(self.title) + ')'
+                string += '_c' + str(curve_number)
+                if label is not None:
+                    string += '(' + correct_filename(label) + ')' 
+                string += FILENAME_DATA_EXT
+                filename = path.join( DIRNAME_DATA, string )
+
+            # Add filename to the list, or increase volatile data counter
+            if volatile:
+                self.n_volatiles += 1
+            else:
+                self.data_filenames.append(filename)
+
+            # Save data to data files, unless they are volatile
+            if not volatile:
+                if (self.plot_type == '3D'):
+                    data_file_3d( data_list[i][0],
+                                  data_list[i][1],
+                                  data_list[i][2],
+                                  filename )
+
+                elif (data_list[i][0] is None):
+                    data_file_1d( data_list[i][1],
+                                  filename )
+
+                else:
+                    data_file_2d( data_list[i][0],
+                                  data_list[i][1],
+                                  filename )
 
             # Add plot command to the command string
             command_string += '\"' + filename + '\"'
@@ -541,9 +502,26 @@ class _PlotWindow:
                 command_string += ' ' + options
             if (i < len(data_list) - 1):
                 command_string += ', '
+
+        # For volatile data, add the datastrings          
+        if volatile:
+            command_string += EOL
+            for data in data_list:
+                if (self.plot_type == '3D'):
+                    command_string += data2string_3d(data[0],
+                                                     data[1],
+                                                     data[2])
+
+                elif (data[0] is None):
+                    command_string += data2string_1d(data[1])
+
+                else:
+                    command_string += data2string_2d(data[0],
+                                                     data[1])
                         
         # Send command string to gnuplot   
         self._command(command_string)
 
         return status, message
-    
+
+

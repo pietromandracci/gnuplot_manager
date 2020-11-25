@@ -1,4 +1,34 @@
 =============
+Version 0.1.4
+
+=============
+
+Added functions
+---------------
+
+The following functions were added
+
+*plot_1d()*
+    allows to plot from 1d data, useful if you want
+    to give only y-values and let gnuplot use the
+    ordinal number as x-values or for plots that
+    require 1d data, like boxplots
+
+*plot_box()*
+    allows to plot a boxplot of the given data
+
+Modified functions
+------------------
+
+*plot_curves()*
+    now it is possible to give *None* instead of the x-values
+    in some or all of the list items, which means that for that
+    dataset only y-values are given
+
+
+
+
+=============
 Version 0.1.3
 =============
 

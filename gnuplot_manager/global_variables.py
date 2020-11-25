@@ -59,7 +59,8 @@ PLOT_TYPES         = ('2D', '3D')
 
 # Plotting styles and default one
 DEFAULT_STYLE      = 'points'
-ALLOWED_STYLES_2D  = ('points', 'dots', 'lines', 'linespoints', 'histeps')
+ALLOWED_STYLES_2D  = ('points', 'dots', 'lines', 'linespoints',
+                      'histeps', 'fsteps', 'boxplot')
 ALLOWED_STYLES_3D  = ('points', 'dots', 'lines', 'linespoints')
 
 # Separator char and end-of-line char
@@ -79,6 +80,7 @@ DIRNAME_OUT        = path.join(DIRNAME, 'output')
 DIRNAME_ERR        = path.join(DIRNAME, 'errors')
 
 # Strings used to construct filenames
+FILENAME_VOLATILE  = "-"
 FILENAME_DATA      = 'gnuplot_data'
 FILENAME_DATA_EXT  = '.csv'
 FILENAME_OUT       = 'gnuplot_out'

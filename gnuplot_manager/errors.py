@@ -33,6 +33,7 @@ ERROR_NO_FUNCTION     = (21, 'no functions to plot')
 ERROR_NO_DATA         = (22, 'no data to plot')
 ERROR_INVALID_STYLE   = (23, 'invalid plot style')
 ERROR_WRONG_TYPE      = (24, 'invalid data type')
+ERROR_REPLOT_VOLATILE = (25, 'replot impossible with volatile curves')
 
 # Error about parameters inconsistency (e.g. xmin>xmax)
 ERROR_PLOT_PARAMETERS = (30, 'parameters error')

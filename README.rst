@@ -75,6 +75,10 @@ This package contains the following modules:
     contains all the functions used to create plot windows and plot 
     data or mathematical expressions on them;
 
+*funcutils.py*
+    contains some utility functions which are not intended to be called
+    directly by the user
+
 *demo.py*
     a small demo script;
 
@@ -1074,6 +1078,8 @@ Create, modify, and close plot windows
 Plot data
 ---------
 
+*plot1d()*
+    plot a curve from 1d data
 *plot2d()*
     plot a curve from 2d data
 *plot3d()*
@@ -1203,12 +1209,6 @@ of the *functions.py* module to perform their tasks:
     method used to send commands to gnuplot
 *self._quit_gnuplot()*
     method used to close the gnuplot process and close the window
-*self._data_file_2d()*
-    method used to write 2D data on datafiles
-*self._data_file_3d()*
-    method used to write 3D data on datafiles
-*self._correct_filename()*
-    method used to remove unsuitable chars from filenames
 *self._add_functions()*
     method used to add one or more mathematical expression
 *self._add_curves()*

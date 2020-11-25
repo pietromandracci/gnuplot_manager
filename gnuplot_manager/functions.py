@@ -365,7 +365,39 @@ def plot_command(plot_window, string):
 # | Functions to plot data |
 # +------------------------+
 
-def plot2d(plot_window, x_data, y_data, label=None, replot=False):
+def plot1d(plot_window, data, label=None, volatile=False,replot=False):
+    """ Plots data on a previously initialized plot 
+
+        Parameters
+        ----------
+
+        plot_window:  the plot on which data should be plotted, which must 
+                      have been previously created by the new_plot function
+        data:         y-values of data points (x-values are automatically 
+                      calculated by gnuplot)
+        label:        string used to describe that set of data in the plot
+        volatile:     if True, the data are not written to file, but sent 
+                      to gnuplot as volatile data using the special filename '-'
+        replot:       add new plot instead of overwriting an old one
+
+        Returns
+        -------
+
+        One of the tuples defined in the errors.py module
+    """
+
+    if not isinstance(plot_window, _PlotWindow): return ERROR_NOT_A_PLOT    
+    if (plot_window.plot_type is None): return ERROR_CLOSED_PLOT
+    if (plot_window.plot_type == '3D'):
+        (status, message) = ERROR_WRONG_TYPE
+        message += ': 1D data on a 3D plot window'
+        return status, message
+    
+    return plot_window._add_curves([ [None, data, label, None] ], volatile, replot)        
+
+
+
+def plot2d(plot_window, x_data, y_data, label=None, volatile=False, replot=False):
     """ Plots 2D data on a previously initialized plot 
 
         Parameters
@@ -376,6 +408,8 @@ def plot2d(plot_window, x_data, y_data, label=None, replot=False):
         x_data:       numpy array containing the x-values of data points
         y_data:       numpy array containing the y-values of data points
         label:        string used to describe that set of data in the plot
+        volatile:     if True, the data are not written to file, but sent 
+                      to gnuplot as volatile data using the special filename '-'
         replot:       add new plot instead of overwriting an old one
 
         Returns
@@ -391,10 +425,10 @@ def plot2d(plot_window, x_data, y_data, label=None, replot=False):
         message += ': 2D data on a 3D plot window'
         return status, message
     
-    return plot_window._add_curves([ [x_data, y_data, label, None] ], replot)        
+    return plot_window._add_curves([ [x_data, y_data, label, None] ], volatile, replot)        
 
         
-def plot3d(plot_window, x_data, y_data, z_data, label=None, replot=False):
+def plot3d(plot_window, x_data, y_data, z_data, label=None, volatile=False, replot=False):
     """ Plots 3D data on a previously initialized plot 
 
         Parameters
@@ -406,6 +440,8 @@ def plot3d(plot_window, x_data, y_data, z_data, label=None, replot=False):
         y_data:       numpy array containing the y-values of data points
         z_data:       numpy array containing the z-values of data points
         label:        string used to describe that set of data in the plot
+        volatile:     if True, the data are not written to file, but sent 
+                      to gnuplot as volatile data using the special filename '-'
         replot:       add new plot instead of overwerwriting an old one
 
         Returns
@@ -421,10 +457,43 @@ def plot3d(plot_window, x_data, y_data, z_data, label=None, replot=False):
         message += ': 3D data on a 2D plot window'
         return status, message
     
-    return plot_window._add_curves([ [x_data, y_data, z_data, label, None] ], replot)
+    return plot_window._add_curves([ [x_data, y_data, z_data, label, None] ], volatile, replot)
+
+
+def plot_box(plot_window, data, width=None, label=None, volatile=False, replot=False):
+    """ Plots a box plot from the given data on a previously initialized plot 
+
+        Parameters
+        ----------
+
+        plot_window:  the plot on which data should be plotted, which must 
+                      have been previously created by the new_plot function
+        data:         numpy array containing the data to be plotted
+        width:        width of the box, if not given is decided by gnuplot
+        label:        string used to describe that set of data in the plot
+        volatile:     if True, the data are not written to file, but sent 
+                      to gnuplot as volatile data using the special filename '-'
+        replot:       add new plot instead of overwerwriting an old one
+
+        Returns
+        -------
+
+        One of the tuples defined in the errors.py module
+    """
+    
+    if not isinstance(plot_window, _PlotWindow): return ERROR_NOT_A_PLOT
+    if (plot_window.plot_type is None): return ERROR_CLOSED_PLOT 
+    if (plot_window.plot_type != '2D'):
+        (status, message) = ERROR_WRONG_TYPE
+        message += ': 3D data on a 2D plot window'
+        return status, message
+    if (width is not None):
+        plot_window._command('set boxwidth ' + str(width))
+    
+    return plot_window._add_curves([ [None, data, label, 'with boxplot'] ], volatile, replot)
 
         
-def plot_curves(plot_window, data_list, replot=False):
+def plot_curves(plot_window, data_list, volatile=False, replot=False):
     """ Plots several 2D or 3D data on a previously initialized plot 
 
         Parameters
@@ -439,8 +508,15 @@ def plot_curves(plot_window, data_list, replot=False):
                                  [x2,  y2, z2, label2, options2], ... ] 
                       where:
                       - x1 contains the x-coordinates of the points to plot
+                        can be None if the data to give are not 2D, as in 
+                        the case of boxplots, or if you want gnuplot to 
+                        automatically provide x-values
+                        Plots with and without x values can be mixed:
+                        [ [x1,   y1, label1, options1],     
+                          [None, y2, label2, options2],... ]  
                       - y1 contains the y-coordinates of the points to plot 
-                      - z1 contains the z-coordinates of the points to plot  
+                      - z1 contains the z-coordinates of the points to plot
+                        (for 3D plot windows only)  
                       - label1 is a string, that will be used to identify the plot 
                         in the legend, or None
                       - options1 is a string, containing additional options
@@ -448,6 +524,8 @@ def plot_curves(plot_window, data_list, replot=False):
                       The form must be consisted with the type of plot 
                       that was defined at the plot window creation, 
                       otherwise an error message is returned
+        volatile:     if True, the data are not written to file, but sent 
+                      to gnuplot as volatile data using the special filename '-'
         replot:       add new plots instead of overwerwriting an old ones
 
         Returns
@@ -459,7 +537,8 @@ def plot_curves(plot_window, data_list, replot=False):
     if not isinstance(plot_window, _PlotWindow): return ERROR_NOT_A_PLOT    
     if (plot_window.plot_type is None): return ERROR_CLOSED_PLOT
     
-    return plot_window._add_curves(data_list, replot)
+    return plot_window._add_curves(data_list, volatile, replot)
+
 
 
 # +------------------------------------------+
@@ -599,7 +678,7 @@ def plot_print(plot_window,
     plot_window._command(command_string)
     command_string = 'set output '
     filename = path.join(DIRNAME_IMAGES,
-                         plot_window._correct_filename(filename))
+                         plot_window.correct_filename(filename))
     command_string += '\"' + filename  + '\"'
     plot_window._command(command_string)
     plot_window._command('replot')
@@ -1036,8 +1115,9 @@ def plot_check(plot_window, expanded=False, printout=True, getstring=False):
     string += 'Persistence:          ' + '\"' + str(plot_window.persistence) + '\"' + '\n'
     string += 'Window type:          ' + '\"' + str(plot_window.plot_type) + '\"' + '\n'   
     string += 'Window title:         ' + '\"' + str(plot_window.title) + '\"' + '\n'
-    string += 'Number of functions:  ' + str(len(plot_window.data_filenames)) + '\n'
-    string += 'Number of curves:     ' + str(len(plot_window.functions)) + '\n'
+    string += 'Number of functions:  ' + str(len(plot_window.functions)) + '\n'
+    string += 'Number of curves:     ' + str(len(plot_window.data_filenames)) + '\n'
+    string += 'Number of volatiles:  ' + str(plot_window.n_volatiles) + '\n'
     string += 'X-axis range:         ' + '[' + str(plot_window.xmin) + ',' + str(plot_window.xmax) + ']' + '\n'
     string += 'Y-axis range:         ' + '[' + str(plot_window.ymin) + ',' + str(plot_window.ymax) + ']' + '\n'
     if (plot_window.plot_type == '3D'):
@@ -1172,9 +1252,9 @@ def plot_close(plot_window, purge=PURGE_FILES, delay=None):
                 
         # Remove data files but, if requested, wait a while before doing it 
         if (delay is not None): sleep(delay)
-        for i in range(len(plot_window.data_filenames)):
+        for filename in plot_window.data_filenames:
             try:
-                remove(plot_window.data_filenames[i])
+                remove(filename)
             except FileNotFoundError:
                 status = 3
                 message = ('one or more datafiles for window # '
