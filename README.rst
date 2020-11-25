@@ -13,8 +13,9 @@ using the gnuplot program, in the form of 2D or 3D plots.
 
 Multiple plot windows can be opened, and a separate gnuplot process 
 is started for each of them.  The data to be plotted are saved to files
-and the gnuplot program is called to plot them. Mathematical expressions,
-instead, are sent directly to gnuplot as strings.
+and the gnuplot program is called to plot them, but can also be sent to
+gnuplot inline, if desired. Mathematical expressions are sent directly
+to gnuplot as strings.
 All the package functionalities can be accessed by calling functions,
 the list of which is reported in the `List of available functions`_
 section at the end of this document.
@@ -77,7 +78,7 @@ This package contains the following modules:
 
 *funcutils.py*
     contains some utility functions which are not intended to be called
-    directly by the user
+    directly by the user;
 
 *demo.py*
     a small demo script;
@@ -544,6 +545,37 @@ Note that, when composing filenames, characters listed in the
 *INVALID_CHARS* global variable are removed from the window titles 
 and curve labels, and substituted with the char stored in the 
 *SUBSTITUTE_CHAR* variable (which is *"_"*, unless you change it).
+
+
+Plotting volatile data
+----------------------
+
+It is also possibile to pass data to gnuplot without writing them to
+disk.  This can be achieved by passing the *volatile=True* argument
+to any of the plot functions described in this section.  In this case
+a data file is not created, instead the data are passed to gnuplot
+as a string, together with the plotting commands, using the special
+filename *'-'*. 
+
+Note that plotting data in this way has some limitations: if there are
+curves plotted from volatile data it is *not* possible to plot other
+curves or functions on the same plot window using the *replot* option.
+So if you want to mix on the same plot windows volatile curves (i.e.
+curves plotted using the *volatile* argument) together with non volatile
+ones or functions, you must plot the volatile curves as the *last* plot
+instruction.  Example:
+
+>>> x = numpy.linspace(0,100,101)
+>>> y = x * x
+>>> z = y * x / 100
+>>> gm.plot_function(myplot2d, 'x**2','function')
+>>> gm.plot2d(myplot2d, x, y, label='non volatile data', replot=True)
+>>> gm.plot2d(myplot2d, x, z, label='volatile data', volatile=True, replot=True)
+
+.. image:: https://raw.githubusercontent.com/pietromandracci/gnuplot_manager/master/images/volatile.png
+
+Note that while volatile data are plotted on a plot window, gnuplot
+does not allow to toggle logarithmic scales.
 
 
 Plotting mathematical functions

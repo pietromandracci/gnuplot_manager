@@ -15,13 +15,7 @@
 
 """ Some utility functions. """
 
-#from subprocess import Popen, PIPE, DEVNULL, TimeoutExpired
-#from os import path, mkdir
-#from time import sleep
-
 from .global_variables import *
-#from .errors import *
-
 
 
 def correct_filename(filename):
@@ -47,7 +41,6 @@ def correct_filename(filename):
     return filename
 
 
-
 def data2string_1d(data, eol=EOL):
     """ Create a string with the given data, to be sent to gnuplot.
 
@@ -66,8 +59,6 @@ def data2string_1d(data, eol=EOL):
  
         A string with the data in the form requested by gnuplot
     """
-    # If data is an array, get a list from it
-
     s = ''
     for value in data:
         s += str(value) + eol
@@ -95,8 +86,6 @@ def data2string_2d(x_data, y_data, eol=EOL):
  
         A string with the data in the form requested by gnuplot
     """
-    # If data is an array, get a list from it
-
     s = ''
     for i in range(len(x_data)):
         s += str(x_data[i]) + ' ' + str(y_data[i]) + eol
@@ -125,8 +114,6 @@ def data2string_3d(x_data, y_data, z_data, eol=EOL):
  
         A string with the data in the form requested by gnuplot
     """
-    # If data is an array, get a list from it
-
     s = ''
     for i in range(len(x_data)):
         s += str(x_data[i]) + ' ' + str(y_data[i]) + ' ' + str(z_data[i]) + eol

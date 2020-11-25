@@ -21,6 +21,7 @@ from time import sleep
 
 from .global_variables import *
 from .errors import *
+from .funcutils import correct_filename
 from .classes import _PlotWindow
 
 
@@ -678,7 +679,7 @@ def plot_print(plot_window,
     plot_window._command(command_string)
     command_string = 'set output '
     filename = path.join(DIRNAME_IMAGES,
-                         plot_window.correct_filename(filename))
+                         correct_filename(filename))
     command_string += '\"' + filename  + '\"'
     plot_window._command(command_string)
     plot_window._command('replot')
@@ -900,6 +901,8 @@ def plot_replot(plot_window):
     
     (status, message) = NOERROR
 
+    if plot_window.n_volatiles: return ERROR_REPLOT_VOLATILE
+
     if not isinstance(plot_window, _PlotWindow): return ERROR_NOT_A_PLOT
     if (plot_window.plot_type is None): return ERROR_CLOSED_PLOT
     
@@ -922,7 +925,11 @@ def plot_replot_all():
     
     (status, message) = NOERROR   
     
-    for plot_window in window_list: plot_replot(plot_window)
+    for plot_window in window_list:
+        (status, message) = plot_replot(plot_window)
+
+    if status:
+        message += ' on some plot windows' 
     
     return status, message
 

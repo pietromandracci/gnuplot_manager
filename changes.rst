@@ -1,7 +1,13 @@
 =============
 Version 0.1.4
-
 =============
+
+Package structure
+-----------------
+
+The *funcutils.py* module has been added and some
+methods of the *_PlotWindow* class have become
+functions and have been moved there
 
 Added functions
 ---------------
@@ -23,9 +29,19 @@ Modified functions
 *plot_curves()*
     now it is possible to give *None* instead of the x-values
     in some or all of the list items, which means that for that
-    dataset only y-values are given
+    dataset only y-values are given.
 
+The functions used to plot from data now support the *volatile*
+argument, which allows to pass data to gnuplot inline (without
+writing them to disk) using the special filename *'-'*.
+However, if the plot window contains plots made in this way,
+plotting other data or functions on it using the *replot* option
+is not possible.
 
+Documentation & testing
+-----------------------
+
+- the *README.rst* file was updated
 
 
 =============
