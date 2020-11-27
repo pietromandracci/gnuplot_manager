@@ -21,7 +21,7 @@ from subprocess import run, PIPE
 
 # Check if the gnuplot program exists
 # and set the gnuplot_installed flag accordingly
-# If the 'which' program is not found set to None
+# If the 'which' program is not found, set to None
 try: 
     gnuplot_installed = not run(['which', 'gnuplot'],
                                            stdout=PIPE,
@@ -75,7 +75,6 @@ PRINT_FILENAME     = 'output_window#'
 
 # Names of subdirs for data and gnuplot output
 DIRNAME_DATA       = path.join(DIRNAME, 'data')
-DIRNAME_IMAGES     = path.join(DIRNAME, 'images')
 DIRNAME_OUT        = path.join(DIRNAME, 'output')
 DIRNAME_ERR        = path.join(DIRNAME, 'errors')
 
@@ -91,19 +90,32 @@ INVALID_CHARS      = ('\000', '/', '\\', '*', '!', '|','\"', '\'', '>', '<', ','
 # The invalid characters are substituted with this one
 SUBSTITUTE_CHAR    = '_'
 
-# Default value of the purge option, stating if data files must be deleted
-# when a plot window is closed
-PURGE_FILES        = False
+# Default values of the purge options
 
-# Time allowed to the gnuplot process to quit nicely, before being killed (in seconds)
+# If True, old data files are deleted by default each time new data is plotted
+# and when a window is closed
+PURGE_DATA         = True
+
+# If True, the directories are removed (if empty) when
+# all the plots are closed
+PURGE_DIR          = True
+
+# Time  (in seconds) allowed for the gnuplot process
+# to quit nicely, before being killed
 TIMEOUT_QUIT       = 1
 
 # REDIRECT_OUT=True:  save gnuplot otuput and errors to files
 # REDIRECT_OUT=False: leave it to /dev/stdout and /dev/stderr
 # REDIRECT_OUT=None:  send them to /dev/null
-REDIRECT_OUT   = False
-# If True, plots remain visible after gnuplot is closed
-PERSISTENCE    = False
+REDIRECT_OUT       = False
+
+# Default persistence: if True, plots remain visible after gnuplot is closed
+PERSISTENCE        = False
+
+# Defines the default way to pass data to gnuplot:
+# True:  pass data inline as a string
+# False: write data to data files
+VOLATILE           = False
 
 # List of all the active plots, as instances of the _PlotWindow class
-window_list    = []
+window_list        = []

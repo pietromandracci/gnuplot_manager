@@ -124,7 +124,7 @@ def main():
     wait()
 
     print('* -> Function plot_close_all')
-    plot_close_all(purge=True)
+    plot_close_all()
     wait()
 
     print('**End of test**\n')

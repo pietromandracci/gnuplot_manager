@@ -6,8 +6,8 @@ Package structure
 -----------------
 
 The *funcutils.py* module has been added and some
-methods of the *_PlotWindow* class have become
-functions and have been moved there
+methods of the *_PlotWindow* class have been turned to
+functions and moved there
 
 Added functions
 ---------------
@@ -26,10 +26,24 @@ The following functions were added
 Modified functions
 ------------------
 
+*new_plot()*
+    now it is possible to pass the *purge* argument, which is
+    *True* by default, with which the data files are automatically
+    deleted each time new data or functions are plotted without
+    the *replot* option, and when the window is closes
+
 *plot_curves()*
     now it is possible to give *None* instead of the x-values
     in some or all of the list items, which means that for that
     dataset only y-values are given.
+
+*plot_close()*
+    now the datafiles are deleted or not dependind of the window
+    has been opened with the *purge*options
+
+*plot_close_all()*
+    now tries to delete the *gnuplot_manager.out* directory,
+    if it is empty
 
 The functions used to plot from data now support the *volatile*
 argument, which allows to pass data to gnuplot inline (without
@@ -42,6 +56,7 @@ Documentation & testing
 -----------------------
 
 - the *README.rst* file was updated
+- the *demo.py* and *test.py* scripts were updated
 
 
 =============

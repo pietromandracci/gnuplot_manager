@@ -16,8 +16,7 @@
 """ The _PlotWindow class, used to define a plot window. """
 
 from subprocess import Popen, PIPE, DEVNULL, TimeoutExpired
-from os import path, mkdir
-from time import sleep
+from os import remove, path, mkdir
 
 from .global_variables import *
 from .errors import *
@@ -42,7 +41,8 @@ class _PlotWindow:
                  plot_type=DEFAULT_TYPE,
                  title=None,
                  persistence=PERSISTENCE,
-                 redirect_output=REDIRECT_OUT):
+                 redirect_output=REDIRECT_OUT,
+                 purge=PURGE_DATA):
         """ An instance of this class contains a plot window.
 
             Parameters
@@ -58,6 +58,7 @@ class _PlotWindow:
             height:          height of the plot window
             xpos:            x position of the plot on the screen
             ypos:            y position of the plot on the screen
+            options:         a string containing other options for the terminal
             plot_type:       a string defining the type of plot
                              must be one of the strings in PLOT_TYPES
             title:           a string used as the title of the plot
@@ -66,7 +67,8 @@ class _PlotWindow:
             redirect_output: True:  save gnuplot otuput and errors to files
                              False: send then to /dev/stdout and /dev/stderr
                              None:  send them to /dev/null
-            options:         a string containing other options for the terminal
+            purge:           if True, old datafiles are deleted each time 
+                             new data is plotted on this window
 
             Initialized data attributes
             ---------------------------
@@ -90,6 +92,10 @@ class _PlotWindow:
             self.title:           the window title (None if not given)
             self.data_filenames:  list containing the names of the data files
             self.functions:       list containing the functions plotted
+            self.n_volatiles      number of curves plotted as volatile
+                                  (passing the data inline, without writing to file)
+            self.purge:           if True, old datafiles are deleted each time 
+                                  new data is plotted
             self.error:           one of the tuples in the errors.py module
         """
 
@@ -116,6 +122,15 @@ class _PlotWindow:
                         + DEFAULT_TYPE + '\"' )  
             self.error = (status, message)
 
+        # Store the persistence status
+        self.persistence = persistence
+
+        # Store the requested purge status
+        self.purge = purge
+        
+        # Store the window title (may be None)
+        self.title = title        
+
         # Store the number of axis     
         if (self.plot_type == '3D'): self.n_axes = 3
         else:                        self.n_axes = 2
@@ -129,14 +144,8 @@ class _PlotWindow:
                 break
         if (self.window_number is None): self.window_number = len(window_list)
         
-        # Add this plot to the list of the active plots
+        # Add this plot window to the list of the active ones
         window_list.append(self)
-
-        # Store the window title (may be None)
-        self.title = title
-
-        # Store the persistence status
-        self.persistence = persistence
         
         # Initialize the lists where data filenames 
         # and functon strings will be stored
@@ -150,18 +159,15 @@ class _PlotWindow:
         self.ymin = None
         self.ymax = None
         self.zmin = None
-        self.zmax = None
-            
-        # Create the data files directory, if it doesn't exist
-        if not path.exists(DIRNAME):        mkdir(DIRNAME)
-        if not path.exists(DIRNAME_DATA):   mkdir(DIRNAME_DATA)
+        self.zmax = None            
                 
         # Start the gnuplot process to plot on this window
         if persistence: exec_list = ['gnuplot','-p']
         else:           exec_list = ['gnuplot']        
         if redirect_output is True:
             # If redirection of gnuplot output to files is requested
-            # create the directories to save gnuplot output and errors
+            # Create the directories to save gnuplot output and errors
+            if not path.exists(DIRNAME):     mkdir(DIRNAME)
             if not path.exists(DIRNAME_OUT): mkdir(DIRNAME_OUT)
             if not path.exists(DIRNAME_ERR): mkdir(DIRNAME_ERR)
             self.filename_out = path.join( DIRNAME_OUT, FILENAME_OUT
@@ -169,12 +175,8 @@ class _PlotWindow:
             self.filename_err = path.join( DIRNAME_ERR, FILENAME_ERR
                                            + '_w_' + str(self.window_number) )
             if self.title is not None:
-                self.filename_out += ( '('
-                                       + correct_filename(self.title)
-                                       + ')' )
-                self.filename_err += ( '('
-                                       + correct_filename(self.title)
-                                       + ')' )
+                self.filename_out += '(' + correct_filename(self.title) + ')'
+                self.filename_err += '(' + correct_filename(self.title) + ')'
             self.gnuplot_process = Popen(exec_list,
                                          stdin=PIPE,
                                          stdout=open(self.filename_out, 'w'),
@@ -202,8 +204,7 @@ class _PlotWindow:
                 command_string += ' ' + str(options)
             self._command(command_string)
         if title is not None:
-            self._command('set title \"' + correct_filename(self.title)
-                          + '\"')
+            self._command('set title \"' + correct_filename(self.title) + '\"')
             
             
     def _command(self, command_string):
@@ -267,23 +268,30 @@ class _PlotWindow:
 
         (status, message) = NOERROR
 
-        if (self.n_volatiles and replot):
-            return ERROR_REPLOT_VOLATILE
+        if (self.n_volatiles and replot): return ERROR_REPLOT_VOLATILE
         if not function_list: return ERROR_NO_FUNCTION 
         if (replot and (not self.data_filenames) and (not self.functions)):
-            return ERROR_NO_REPLOT           
+            return ERROR_NO_REPLOT
         # Check consistency of the whole list
         for i in range(len(function_list)):
             if ( len(function_list[i]) != 3):
                 (status, message) = ERROR_PLOT_PARAMETERS
                 if len(function_list) > 1:
                     message += ' in list item # ' + str(i)
-                message += ( ': 3 items expected, given '
-                             + str(len(function_list[i])) )
+                message += ': 3 items expected, given ' + str(len(function_list[i]))
                 return (status, message)
                    
-        # Initialize data attributes of this plot window   
+        # If it is not a replot, reset the plot window   
         if not replot:
+            # If purge status is True, remove old datafiles
+            if self.purge:
+                for filename in self.data_filenames:
+                    try:
+                        remove(filename)
+                    except FileNotFoundError:
+                        pass
+            # Clear the list of datafiles and functions
+            # and reset the number of volatiles
             self.data_filenames.clear()
             self.functions.clear()
             self.n_volatiles = 0
@@ -317,7 +325,7 @@ class _PlotWindow:
         return status, message        
         
 
-    def _add_curves(self, data_list, volatile=False, replot=False):
+    def _add_curves(self, data_list, volatile=VOLATILE, replot=False):
         """ Add one or more curves from data to the plot window. 
 
             Parameters
@@ -329,11 +337,12 @@ class _PlotWindow:
                           3D data: [ [x1,   y1, z1, label1, options1], 
                                      [x2,   y2, z2, label2, options2], ... ] 
                           where:
-                          - x1 contains the x-coordinates of the points to plot
-                            can be None if the data to give are not 2D, as in 
-                            the case of boxplots, or if you want gnuplot to 
-                            automatically provide x-values
-                            Plots with and without x values can be mixed:
+                          - x1 contains the x-coordinates of the points to plot;
+                            for 2D plot windows only this can be set to None, 
+                            which is useful if the data are 1D, as in the case 
+                            of boxplots, or if you want gnuplot to 
+                            automatically provide x-values.
+                            2D plots with and without x values can be mixed:
                             [ [x1,   y1, label1, options1],     
                               [None, y2, label2, options2],... ]  
                           - y1 contains the y-coordinates of the points to plot 
@@ -359,14 +368,14 @@ class _PlotWindow:
 
         (status, message) = NOERROR
 
-        if (self.n_volatiles and replot):
-            return ERROR_REPLOT_VOLATILE      
+        if (self.n_volatiles and replot): return ERROR_REPLOT_VOLATILE      
         if not data_list: return ERROR_NO_DATA
         if (replot and (not self.data_filenames) and (not self.functions)):
             return ERROR_NO_REPLOT
         
         # Check consistency of the whole list
         for i in range(len(data_list)):
+            
             # Check if xdata are missing in this item
             xmissing = False
             if (data_list[i][0] is None):
@@ -398,7 +407,9 @@ class _PlotWindow:
                     len_z = len(data_list[i][2])
                 except TypeError:
                     data_list[i][2] = [ data_list[i][2] ]
-                    len_z = 1                
+                    len_z = 1
+                    
+            # Check consistency of the data        
             if (len(data_list[i]) != self.n_axes + 2):
                 (status, message) = ERROR_PLOT_PARAMETERS
                 if len(data_list) > 1: message += ' in list item # ' + str(i)
@@ -420,20 +431,35 @@ class _PlotWindow:
                 (status, message) = ERROR_PLOT_PARAMETERS
                 if len(data_list) > 1: message += ' in list item # ' + str(i)
                 message += ': zero size data given'
-                return status, message            
+                return status, message
+
+        # Create the data files directory, if it doesn't exist,
+        # unless a volatile plot has been requested
+        if not volatile:
+            if not path.exists(DIRNAME):      mkdir(DIRNAME)
+            if not path.exists(DIRNAME_DATA): mkdir(DIRNAME_DATA)
                    
-        # Initialize data attributes of this plot window   
+        # If it is not a replot, reset the plot window   
         if not replot:
+            # If purge status is True, remove old datafiles
+            if self.purge:
+                for filename in self.data_filenames:
+                    try:
+                        remove(filename)
+                    except FileNotFoundError:
+                        pass
+            # Clear the list of datafiles and functions
+            # and reset the number of volatiles
             self.data_filenames.clear()
             self.functions.clear()
-            self.n_volatiles = 0
+            self.n_volatiles = 0            
         
         # Beginning of the command string to send to gnuplot
         if replot:                     command_string = 'replot '
         elif (self.plot_type == '3D'): command_string = 'splot '
         else:                          command_string = 'plot '
 
-        # Number of curves before adding the new ones
+        # Save the old number of curves before adding the new ones
         n_curves = len(self.data_filenames)          
         for i in range(len(data_list)):         
                         
@@ -450,6 +476,7 @@ class _PlotWindow:
                 options = str(data_list[i][self.n_axes+1])
                         
             # Define the unique filename for the data file
+            # or "-" for volatile data
             if volatile:
                 filename = FILENAME_VOLATILE
             else:

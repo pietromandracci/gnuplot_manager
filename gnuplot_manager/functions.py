@@ -16,7 +16,7 @@
 
 """ Functions used to plot data on plot windows and to do other tasks. """
 
-from os import remove, path, mkdir
+from os import remove, path, mkdir, rmdir
 from time import sleep
 
 from .global_variables import *
@@ -48,6 +48,7 @@ def new_plot(*,
              xlabel=None, ylabel=None, zlabel=None,
              persistence=PERSISTENCE,
              redirect_output=REDIRECT_OUT,
+             purge=PURGE_DATA,
              options=None):        
     """ This function returns a plot as an istance of the class _PlotWindow.
 
@@ -56,7 +57,7 @@ def new_plot(*,
         Parameters
         ----------
 
-        (Note that all the parameters are keyword-only)
+        (All the parameters are keyword-only)
 
         xpos:            x position of the plot on the screen
         ypos:            y position of the plot on the screen
@@ -93,6 +94,8 @@ def new_plot(*,
         redirect_output: True:  save gnuplot otuput and errors to files
                          False: send them to /dev/stdout and /dev/stderr
                          None:  send them to /dev/null
+        purge:           if True, old datafiles are deleted each time 
+                         new data is plotted on this window
         options:         a string containing other options for the terminal
 
         .. [1] read gnuplot documentation for format strings
@@ -116,22 +119,24 @@ def new_plot(*,
     (status, message) = NOERROR
 
     if (gnuplot_installed is False):
-        raise FileNotFoundError('gnuplot is not installed on this system')
+        raise FileNotFoundError('gnuplot program was not found')
         
     # Create an instance of the _PlotWindow class
-    plot_window = _PlotWindow(plot_type=plot_type,
-                              gnuplot_default=gnuplot_default,
-                              terminal=terminal,
+    plot_window = _PlotWindow(gnuplot_default=gnuplot_default,
+                              terminal=terminal,                              
                               width=width,
                               height=height,
                               xpos=xpos,
                               ypos=ypos,
-                              title=title,
+                              options=options,                              
+                              plot_type=plot_type,
+                              title=title,                              
                               persistence=persistence,
-                              redirect_output=redirect_output)
-    
-    # If there were errors during the instance creation
-    # do not apply the requested settings
+                              redirect_output=redirect_output,
+                              purge=purge)
+       
+    # If there were not errors during the instance creation,
+    # not apply the requested settings
     if not plot_window.error[0]:   
         # Apply the requested plot settings
         (status, message)= plot_set(plot_window,
@@ -219,7 +224,15 @@ def plot_set(plot,
 
     if not isinstance(plot, _PlotWindow): return ERROR_NOT_A_PLOT
     if (plot.plot_type is None): return ERROR_CLOSED_PLOT
-    if (replot and (not plot.data_filenames) and (not plot.functions)):
+    #if (plot.n_volatiles and replot): return ERROR_REPLOT_VOLATILE
+    if (plot.n_volatiles
+        and ((logx is not None) or (logy is not None) or (logz is not None))):
+        return ERROR_LOGSET_VOLATILE
+    
+    if (replot
+        and (not plot.n_volatiles)
+        and (not plot.data_filenames) and
+        (not plot.functions)):
         return ERROR_NO_REPLOT
     if (style is not None ):
         if ( (plot.plot_type == '2D') and (style not in ALLOWED_STYLES_2D) ):
@@ -366,7 +379,7 @@ def plot_command(plot_window, string):
 # | Functions to plot data |
 # +------------------------+
 
-def plot1d(plot_window, data, label=None, volatile=False,replot=False):
+def plot1d(plot_window, data, label=None, volatile=VOLATILE,replot=False):
     """ Plots data on a previously initialized plot 
 
         Parameters
@@ -398,7 +411,7 @@ def plot1d(plot_window, data, label=None, volatile=False,replot=False):
 
 
 
-def plot2d(plot_window, x_data, y_data, label=None, volatile=False, replot=False):
+def plot2d(plot_window, x_data, y_data, label=None, volatile=VOLATILE, replot=False):
     """ Plots 2D data on a previously initialized plot 
 
         Parameters
@@ -429,7 +442,7 @@ def plot2d(plot_window, x_data, y_data, label=None, volatile=False, replot=False
     return plot_window._add_curves([ [x_data, y_data, label, None] ], volatile, replot)        
 
         
-def plot3d(plot_window, x_data, y_data, z_data, label=None, volatile=False, replot=False):
+def plot3d(plot_window, x_data, y_data, z_data, label=None, volatile=VOLATILE, replot=False):
     """ Plots 3D data on a previously initialized plot 
 
         Parameters
@@ -461,7 +474,7 @@ def plot3d(plot_window, x_data, y_data, z_data, label=None, volatile=False, repl
     return plot_window._add_curves([ [x_data, y_data, z_data, label, None] ], volatile, replot)
 
 
-def plot_box(plot_window, data, width=None, label=None, volatile=False, replot=False):
+def plot_box(plot_window, data, width=None, label=None, volatile=VOLATILE, replot=False):
     """ Plots a box plot from the given data on a previously initialized plot 
 
         Parameters
@@ -494,7 +507,7 @@ def plot_box(plot_window, data, width=None, label=None, volatile=False, replot=F
     return plot_window._add_curves([ [None, data, label, 'with boxplot'] ], volatile, replot)
 
         
-def plot_curves(plot_window, data_list, volatile=False, replot=False):
+def plot_curves(plot_window, data_list, volatile=VOLATILE, replot=False):
     """ Plots several 2D or 3D data on a previously initialized plot 
 
         Parameters
@@ -508,11 +521,12 @@ def plot_curves(plot_window, data_list, volatile=False, replot=False):
                       3D data: [ [x1,  y1, z1, label1, options1], 
                                  [x2,  y2, z2, label2, options2], ... ] 
                       where:
-                      - x1 contains the x-coordinates of the points to plot
-                        can be None if the data to give are not 2D, as in 
-                        the case of boxplots, or if you want gnuplot to 
-                        automatically provide x-values
-                        Plots with and without x values can be mixed:
+                      - x1 contains the x-coordinates of the points to plot;
+                        for 2D plot windows only, this can be set to None, 
+                        which is useful if the data are 1D, as in the case 
+                        of boxplots, or if you want gnuplot to 
+                        automatically provide x-values.
+                        2D plots with and without x values can be mixed:
                         [ [x1,   y1, label1, options1],     
                           [None, y2, label2, options2],... ]  
                       - y1 contains the y-coordinates of the points to plot 
@@ -552,7 +566,7 @@ def plot_function(plot_window, func_string, label=None, replot=False):
         Parameters
         ----------
 
-        plot_window:  the plot on which data should be plotted, which must 
+        plot_window:  the plot, on which the function should be plotted, which must 
                       have been previously created by the new_plot function
         func_string:  a string containing the mathematical expression
                       using x (or x and y for 3D plots) as independent variable
@@ -561,7 +575,7 @@ def plot_function(plot_window, func_string, label=None, replot=False):
                       '2 * sin(x**2 + y**2)'
                       
                       The string is sent to gnuplot as it is, without checking 
-                      that it is a correct function al expression. If it is not, 
+                      that it is a correct functional expression. If it is not, 
                       gnuplot will provide  an error message, which will be
                       - sent to /dev/stderr, if the plot was opened with the 
                         'redirect_output=False' option (default)
@@ -591,8 +605,9 @@ def plot_functions(plot_window, func_list, replot=False):
 
         Parameters
         ----------
-        plot_window:  the plot on which data should be plotted, which must 
-                      have been previously created by the new_plot function
+
+        plot_window:  the plot, on which the functions should be plotted, which 
+                      must have been previously created by the new_plot function
         func_list:    a list in one the following form:
                       [ [function1, label1, options1], 
                         [function2, label2, options1], ... ]
@@ -605,7 +620,7 @@ def plot_functions(plot_window, func_list, replot=False):
                       - options1 is a string, containing additional options
                         or None                       
                       The string is sent to gnuplot as it is, without checking 
-                      that it is a correct function al expression. If it is not, 
+                      that it is a correct functional expression. If it is not, 
                       gnuplot will provide  an error message, which will be
                       - sent to /dev/stderr, if the plot was opened with the 
                         'redirect_output=False' option (default)
@@ -636,13 +651,16 @@ def plot_print(plot_window,
                options=None):
     """ Export the plot to a file.
 
+        The plot is saved as an image, the type of which depends on the choosen 
+        terminal (default is png), in the present working directory.
+
         Parameters
         ----------
 
-        plot_window:    the plot on which data should be plotted, which must 
-                        have been previously created by the new_plot function
+        plot_window:    the plot window which must be printed
         terminal:       type of terminal to use to print the image 
-                        e.g. 'png', 'jpeg', 'gif'
+                        (e.g. 'png', 'jpeg', 'gif') mus be one of the
+                        terminal listed in the PRINT_TERMINALS global variable
         filename:       the file to which the image must be saved
                         if non given, or set to None, a default one is used
         options:        a string with terminal options,
@@ -658,38 +676,48 @@ def plot_print(plot_window,
     
     if not isinstance(plot_window, _PlotWindow): return ERROR_NOT_A_PLOT
     if (plot_window.plot_type is None): return ERROR_CLOSED_PLOT
-    if ( (not plot_window.data_filenames) and (not plot_window.functions) ):
+    if ( (not plot_window.n_volatiles)
+         and (not plot_window.data_filenames)
+         and (not plot_window.functions) ):
         return ERROR_NO_REPLOT    
     
     if terminal not in PRINT_TERMINALS: return ERROR_UNKNOWN_TERM   
 
-    if not path.exists(DIRNAME_IMAGES): mkdir(DIRNAME_IMAGES)
     if (filename is None):
         filename = ( PRINT_FILENAME
                      + str(plot_window.window_number)
                      + PRINT_EXT[terminal] )
     else:
-        filename = str(filename)
-    
+        filename = correct_filename(str(filename))
+        
+    # Save the current terminal settings
     plot_window._command('set terminal push')
+
+    # Set the terminal for printing 
     command_string =  'set terminal '
     command_string += terminal
     if (options is not None):
         command_string += ' ' + str(options)    
     plot_window._command(command_string)
+
+    # Set the filename 
     command_string = 'set output '
-    filename = path.join(DIRNAME_IMAGES,
-                         correct_filename(filename))
     command_string += '\"' + filename  + '\"'
+
+    # Sent the command to change terminal
     plot_window._command(command_string)
+
+    # Print the plot
     plot_window._command('replot')
+
+    # Recover the previous terminal settings
     plot_window._command('set terminal pop')
 
     return (status, message)
 
 
 def plot_print_all(terminal=DEFAULT_PRINT_TERM, options=None):
-    """ Esport all the open plot windows to files.
+    """ Export all the open plot windows to files.
 
         Parameters
         ----------
@@ -706,6 +734,8 @@ def plot_print_all(terminal=DEFAULT_PRINT_TERM, options=None):
     """
 
     (status, message) = NOERROR
+
+    if not window_list: return ERROR_NO_PLOTS    
        
     for plot_window in window_list:
         plot_print(plot_window, terminal=terminal, options=options)
@@ -718,7 +748,7 @@ def plot_print_all(terminal=DEFAULT_PRINT_TERM, options=None):
 # +---------------------------------------------+
 
 def _best_pos(xmin, xmax, d=1):
-    """ Return a suitable coordinate to plot a dot.
+    """ Return coordinate to plot a dot to force gnuplot plot axis.
 
         Search for a suitable coordinate on an axis
         to plot a dot on the graph to force gnuplot 
@@ -730,7 +760,7 @@ def _best_pos(xmin, xmax, d=1):
         xmin: minimum value of the range
         xamx: maximum value of the range
         d:    distance from the extreme of the range
-              at which plot is dotted if some conditions
+              at which plot is plotted if some conditions
               are true
 
         Returns
@@ -782,8 +812,15 @@ def plot_reset(plot_window, plot_axes=True):
     if (plot_window.plot_type is None): return ERROR_CLOSED_PLOT
 
     # Reset functions and curves
+    if plot_window.purge:
+        for filename in plot_window.data_filenames:
+            try:
+                remove(filename)
+            except FileNotFoundError:
+                pass    
     plot_window.data_filenames.clear()
     plot_window.functions.clear()
+    plot_window.n_volatiles = 0
 
     # Remove labels
     plot_window._command('unset label')
@@ -821,7 +858,7 @@ def plot_reset_all(plot_axes=True):
     """ Resets all the plot windows.
 
         This function removes all the functions and curves
-        and clears all plot windows.
+        and clears all the plot windows.
 
         Parameters
         ----------
@@ -836,6 +873,8 @@ def plot_reset_all(plot_axes=True):
     """
 
     (status, message) = NOERROR
+
+    if not window_list: return ERROR_NO_PLOTS    
 
     for plot_window in window_list:
         plot_reset(plot_window, plot_axes)
@@ -874,10 +913,11 @@ def plot_clear_all():
         -------
 
         One of the tuples defined in the errors.py module
-
     """
 
     (status, message) = NOERROR
+
+    if not window_list: return ERROR_NO_PLOTS    
 
     for plot_window in window_list:
         plot_clear(plot_window)
@@ -901,12 +941,12 @@ def plot_replot(plot_window):
     
     (status, message) = NOERROR
 
-    if plot_window.n_volatiles: return ERROR_REPLOT_VOLATILE
-
     if not isinstance(plot_window, _PlotWindow): return ERROR_NOT_A_PLOT
     if (plot_window.plot_type is None): return ERROR_CLOSED_PLOT
     
-    if ( (not plot_window.data_filenames) and (not plot_window.functions) ):
+    if ( (not plot_window.n_volatiles)
+         and (not plot_window.data_filenames)
+         and (not plot_window.functions) ):
         return ERROR_NO_REPLOT
     else:
         plot_window._command('replot')
@@ -923,10 +963,13 @@ def plot_replot_all():
         One of the tuples defined in the errors.py module
     """
     
-    (status, message) = NOERROR   
+    (status, message) = NOERROR
+
+    if not window_list: return ERROR_NO_PLOTS    
     
     for plot_window in window_list:
-        (status, message) = plot_replot(plot_window)
+        (status1, message1) = plot_replot(plot_window)
+        if status1: (status, message) = (status1, message1)
 
     if status:
         message += ' on some plot windows' 
@@ -979,7 +1022,7 @@ def plot_label(plot_window,*, x=1, y=1, z=1, label=None, erase=False, replot=Fal
                              + str(x) + ',' + str(y) + ',' + str(z))
                             #+ 'left norotate front')
     plot_window._command('show label')
-    if replot: return plot_replot(plot_window)
+    if replot: plot_window._command('replot')
     
     return status, message
 
@@ -1042,6 +1085,8 @@ def plot_raise_all():
     """
 
     (status, message) = NOERROR
+
+    if not window_list: return ERROR_NO_PLOTS    
     
     for plot_window in window_list: plot_window._command('raise')
     
@@ -1058,6 +1103,8 @@ def plot_lower_all():
     """
 
     (status, message) = NOERROR
+
+    if not window_list: return ERROR_NO_PLOTS    
     
     for plot_window in window_list: plot_window._command('lower')
     
@@ -1120,6 +1167,7 @@ def plot_check(plot_window, expanded=False, printout=True, getstring=False):
     string += 'Window number:        ' + str(plot_window.window_number) + '\n'
     string += 'Terminal type:        ' + '\"' + plot_window.term_type + '\"' + '\n'
     string += 'Persistence:          ' + '\"' + str(plot_window.persistence) + '\"' + '\n'
+    string += 'Purge:                ' + '\"' + str(plot_window.purge) + '\"' + '\n'
     string += 'Window type:          ' + '\"' + str(plot_window.plot_type) + '\"' + '\n'   
     string += 'Window title:         ' + '\"' + str(plot_window.title) + '\"' + '\n'
     string += 'Number of functions:  ' + str(len(plot_window.functions)) + '\n'
@@ -1185,11 +1233,8 @@ def plot_list(expanded=False, printout=True, getstring=False):
 
     (status, message) = NOERROR
 
-    if len(window_list) == 0:
-        stsatus = 1
-        message = 'no plots'
-        return status, message
-    
+    if not window_list: return ERROR_NO_PLOTS
+   
     string = ''
     for plot_window in window_list:
         string += plot_check(plot_window, expanded, False, True)
@@ -1207,26 +1252,26 @@ def plot_list(expanded=False, printout=True, getstring=False):
 # | Functions to close active plots |
 # +---------------------------------+
             
-def plot_close(plot_window, purge=PURGE_FILES, delay=None):
+def plot_close(plot_window, keep_output=False, delay=None):
     """ Closes a plot windows and exits from the related gnuplot process 
 
         Parameters
         ----------
 
-        plot_window: the plot to be closed (instance of _PlotWindow class)
-
-        purge:       if set to True, the data files used to store 
-                     data to be plotted will be removed
-        delay:       an int or float number, defining the time to
-                     wait (in secons) before deleting data files;
-                     this can be useful if a plot is created with
-                     the persist=True option and then immediately closed,
-                     since the gnuplot process could not be able to plot the
-                     data before the datafiles are deleted
+        plot_window:  the plot to be closed (instance of _PlotWindow class)
+        keep_output:  do not remove the files to which gnuplot output and 
+                      errors have been redirected, even if the window
+                      was created with the *purge=True* argument                 
+        delay:        an int or float number, defining the time to
+                      wait (in secons) before deleting data files;
+                      this can be useful if a plot is created with
+                      the persist=True option and then immediately closed,
+                      since the gnuplot process could not be able to plot the
+                      data before the datafiles are deleted
         Returns
         -------
 
-       One of the tuples defined in the errors.py module
+        One of the tuples defined in the errors.py module
     """
 
     (status, message) = NOERROR
@@ -1235,39 +1280,38 @@ def plot_close(plot_window, purge=PURGE_FILES, delay=None):
     if (plot_window.plot_type is None): return ERROR_CLOSED_PLOT    
 
     # If requested, delete all the files associated to this plot
-    if purge:
-        
-        # Remove gnuplot output file
-        if (plot_window.filename_out not in ('/dev/stdout', '/dev/null')):
-            try:
-                remove(plot_window.filename_out)
-            except FileNotFoundError:
-                status = 1
-                message = ('the gnuplot output file for window # '
-                           + str(plot_window.window_number)
-                           + ' was not found')
-                
-        # Remove gnuplot error file                
-        if (plot_window.filename_err not in ('/dev/stderr', '/dev/null')):
-            try:
-                remove(plot_window.filename_err)
-            except FileNotFoundError:
-                status = 2
-                message = ('the gnuplot error file for window # '
-                           + str(plot_window.window_number)
-                           + ' was not found')
-                
+    if plot_window.purge:
         # Remove data files but, if requested, wait a while before doing it 
         if (delay is not None): sleep(delay)
         for filename in plot_window.data_filenames:
             try:
                 remove(filename)
             except FileNotFoundError:
-                status = 3
-                message = ('one or more datafiles for window # '
-                           + str(plot_window.window_number)
-                           + ' were not found')
-                
+                (status, message) = ERROR_FILE
+                message += ('one or more datafiles for window # '
+                            + str(plot_window.window_number)
+                            + ' were not found')
+        if not keep_output:        
+            # Remove gnuplot output file
+            if (plot_window.filename_out not in ('/dev/stdout', '/dev/null')):
+                try:
+                    remove(plot_window.filename_out)
+                except FileNotFoundError:
+                    (status, message) = ERROR_FILE
+                    message += ('the gnuplot output file for window # '
+                                + str(plot_window.window_number)
+                                + ' was not found')
+
+            # Remove gnuplot error file                
+            if (plot_window.filename_err not in ('/dev/stderr', '/dev/null')):
+                try:
+                    remove(plot_window.filename_err)
+                except FileNotFoundError:
+                    (status, message) = ERROR_FILE
+                    message += ('the gnuplot error file for window # '
+                                + str(plot_window.window_number)
+                                + ' was not found')
+                    
     # Shut down the associated gnuplot process
     plot_window._quit_gnuplot()
 
@@ -1280,20 +1324,24 @@ def plot_close(plot_window, purge=PURGE_FILES, delay=None):
     return status, message
 
 
-def plot_close_all(purge=PURGE_FILES, delay=None):
+def plot_close_all(keep_output=False, delay=None, purge_dir=PURGE_DIR):
     """ Closes all plots 
 
         Parameters
         ----------
 
-        purge:       if set to True, the data files used to store 
-                     data to be plotted will be removed 
-        delay:       an int or float number, defining the time to
-                     wait (in seconds) before deleting data files;
-                     this can be useful if a plot is created with
-                     the persist=True option and then immediately closed,
-                     since the gnuplot process could not be able to plot the
-                     data before the datafiles are deleted
+        keep_output:  do not remove the files to which gnuplot output and 
+                      errors have been redirected, even if the window
+                      was created with the *purge=True* argument
+        delay:        an int or float number, defining the time to
+                      wait (in seconds) before deleting data files;
+                      this can be useful if a plot is created with
+                      the persist=True option and then immediately closed,
+                      since the gnuplot process could not be able to plot the
+                      data before the datafiles are deleted
+        purge_dir:    remove the directories in which files are stored; 
+                      this works only if they are empty and is uneffective
+                      if keep_output has bee set to True
         Returns
         -------
 
@@ -1302,12 +1350,42 @@ def plot_close_all(purge=PURGE_FILES, delay=None):
 
     (status, message) = NOERROR
     
-    if len(window_list) == 0:
-        status = 1
-        message = 'there are no open plots'
-        return status, message
-    while (len(window_list) > 0):
+    while window_list:
         plot_window = window_list[-1]
-        (status, message) = plot_close(plot_window, purge, delay)
+        (status1, message1) = plot_close(plot_window, keep_output, delay)
+        if status1: (status, message) = (status1, message1)
+
+    if (purge_dir and not keep_output):
+        # Try to remove data file subdirectory
+        try:
+            rmdir(DIRNAME_DATA)
+        except FileNotFoundError:
+            pass
+        except OSError:
+            (status, message) = ERROR_FILE
+        # Try to remove subdirectory with gnuplot output            
+        try:
+            rmdir(DIRNAME_OUT)
+        except FileNotFoundError:
+            pass
+        except OSError:
+            (status, message) = ERROR_FILE
+        # Try to remove subdirectory with gnuplot errors            
+        try:
+            rmdir(DIRNAME_ERR)
+        except FileNotFoundError:
+            pass
+        except OSError:
+            (status, message) = ERROR_FILE
+        # Try to remove main directory
+        try:
+            rmdir(DIRNAME)
+        except FileNotFoundError:
+            pass
+        except OSError:
+            (status, message) = ERROR_FILE
                 
+    if status:
+        message += ': some files or directories could not be deleted'                
+  
     return status, message

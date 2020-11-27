@@ -27,7 +27,7 @@ def correct_filename(filename):
         Parameters
         ----------
 
-        filename: a string, representive a filename
+        filename: a string, representinge a filename
 
         Returns
         -------
@@ -45,14 +45,14 @@ def data2string_1d(data, eol=EOL):
     """ Create a string with the given data, to be sent to gnuplot.
 
         The string can be used to pass data to gnuplot using the
-        special filename "-" the form of the string is
+        special filename "-". The form of the string is
         "data[0]\ndata[1]\n ... data[len(data)]\ne\n"
 
         Parameters
         ----------
 
-        x_data:  data representing the points to plot
-        eol:     end-of-line character
+        data:  data representing the points to plot
+        eol:   end-of-line character
 
         Returns
         -------
@@ -70,7 +70,7 @@ def data2string_2d(x_data, y_data, eol=EOL):
     """ Create a string with the given data, to be sent to gnuplot.
 
         The string can be used to pass data to gnuplot using the
-        special filename "-" the form of the string is
+        special filename "-". The form of the string is
         "x_data[0] y_data[0]\nx_data[1] y_data[1]\n ... 
          ... x_data[len(data)] y_data[len(data)]\ne\n"
 
@@ -79,7 +79,7 @@ def data2string_2d(x_data, y_data, eol=EOL):
 
         x_data:   data representing x coordinates of the points to plot
         y_data:   data representing y coordinates of the points to plot
-        eol:     end-of-line character
+        eol:      end-of-line character
 
         Returns
         -------
@@ -97,7 +97,7 @@ def data2string_3d(x_data, y_data, z_data, eol=EOL):
     """ Create a string with the given data, to be sent to gnuplot.
 
         The string can be used to pass data to gnuplot using the
-        special filename "-" the form of the string is
+        special filename "-". The form of the string is
         "x_data[0] y_data[0] z_data[0]\nx_data[1] y_data[1]  z_data[1]\n ... 
          ... x_data[len(data)] y_data[len(data)] z_data[len(data)]\ne\n"
 
@@ -107,7 +107,7 @@ def data2string_3d(x_data, y_data, z_data, eol=EOL):
         x_data:   data representing x coordinates of the points to plot
         y_data:   data representing y coordinates of the points to plot
         z_data:   data representing z coordinates of the points to plot
-        eol:     end-of-line character
+        eol:      end-of-line character
 
         Returns
         -------
@@ -139,8 +139,8 @@ def data_file_1d(x_data, filename, eol=EOL):
     """
 
     data_file = open(filename, 'w') 
-    for i in range(len(x_data)):
-        data_file.write( str(x_data[i]) + eol )
+    for x in x_data:
+        data_file.write(str(x) + eol)
     data_file.close()
 
 

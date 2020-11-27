@@ -12,10 +12,9 @@ This package allows to plot data or mathematical expressions inside python,
 using the gnuplot program, in the form of 2D or 3D plots.
 
 Multiple plot windows can be opened, and a separate gnuplot process 
-is started for each of them.  The data to be plotted are saved to files
-and the gnuplot program is called to plot them, but can also be sent to
-gnuplot inline, if desired. Mathematical expressions are sent directly
-to gnuplot as strings.
+is started for each of them.  The data to be plotted can be transfered
+to gnuplot by writing them on files, or can be sent to gnuplot inline.
+Mathematical expressions are sent directly to gnuplot as strings.
 All the package functionalities can be accessed by calling functions,
 the list of which is reported in the `List of available functions`_
 section at the end of this document.
@@ -49,9 +48,9 @@ although they have been tested, errors are still possible.
    >>> from gnuplot_manager.demo import main
    >>> main()
 
-   The demo will run without need of input and last about 35 seconds.
+   The demo will run without need of any input.
     
-The package is released under a GPL licence, in the hope it can be
+This package is released under a GPL licence, in the hope it can be
 useful to someone else. Feeback, bug reports, and suggestions are welcome.
 
 
@@ -70,7 +69,7 @@ This package contains the following modules:
 *classes.py*
     contains the *_PlotWindow* class, used to create a structure containing the
     gnuplot process (instance of *subprocess.Popen*) and some information on
-    the plot (number of curves, names of datafiles, etc.);
+    the plot;
 
 *functions.py*
     contains all the functions used to create plot windows and plot 
@@ -163,7 +162,7 @@ The function returns an instance of the *_PlotWindow* class.
 Note that the plot window does not appear on the screen until you plot
 something on it.
 
-.. note:: In the following, the options of the *new_plot()* functions
+.. note:: In the following, the options of the *new_plot()* function
    are explained: if you want to learn immediately how to plot something,
    jump to the `Plotting from data`_ or `Plotting mathematical functions`_
    sections.
@@ -252,6 +251,15 @@ False
    has been redirected.  This depends on the gnuplot behavior and is not due to an
    erroneous redirection of the devices to the files.
 
+
+Purging data files
+------------------
+
+By default, the old datafiles are removed each time new data or functions are plotted
+on the plot window. If you want to change this behavior, preserving the data files,
+you can pass the *purge=False* argument to the *new_plot()* function.
+   
+
 Other plot window properties
 ----------------------------
 
@@ -336,6 +344,24 @@ The list of all the error messages is contained in the *error.py* module:
 
 >>> help(gm.errors)
 
+Plotting 1D data
+----------------
+
+It is also possible to give to gnuplot a single set of data, usually if you
+want to give y-values and let gnuplot automatically create the x-values,
+by means of the *plot_1d()* function. The function works for 2D plot windows
+only. Example:
+
+>>> y = numpy.linspace(0,100,101)
+>>> gm.plot_1d(myplot2d, y, label='1D data')
+(0,'Ok')
+
+.. image:: https://raw.githubusercontent.com/pietromandracci/gnuplot_manager/master/images/plot1d.png
+
+           
+In the previous example gnuplot has used the ordinal numbers 1-100 as x-values
+for the points of the plot.
+
 
 Plotting histograms
 -------------------
@@ -361,7 +387,20 @@ have put them in tuples also, obtaining the same effect.
 You can set the 'histeps' style on an already opened 2D plot
 window  also, using the *plot_set()* function described in the
 `Changing the window properties`_ section.
-    
+
+
+Plotting boxplots
+-----------------
+
+The function *plot_box()* allows to plot a boxplot from a set of data.
+Example: 
+
+>>> data = numpy.random.normal(3,20,50)
+>>> gm.plot_box(myplot2d, data, width=100, label='My boxplot')
+(0,'Ok')
+
+.. image:: https://raw.githubusercontent.com/pietromandracci/gnuplot_manager/master/images/boxplot.png
+
 
 Plotting 3D data
 ----------------
@@ -455,7 +494,9 @@ is itself a list, made of 4 elements for 2D plots, or 5 elements for 3D ones.
 For 2D plots, each list element has the form *[x, y, label, options]*, while for 3D
 plots it has the form *[x, y, z, label, options]*, where:
 
-- *x* is the array of x coordinates of the points to plot;
+- *x* is the array of x coordinates of the points to plot:
+  for 2d plot windows it can also be set to *None*,
+  in which case the x-values for that curve are automatically created by gnuplot;
 - *y* is the array of y coordinates of the points to plot;
 - *z* is the array of z coordinates of the points to plot (only for 3D plots);
 - *label* is a string with the label to show in the plot legend,
@@ -533,7 +574,8 @@ The name of a data file has the following form:
 - *<n>* is the window number
 - *<window-title>* is the string given to
   the *new_plot()* function as window title
-- *<type>* is '2D' or '3D'      
+- *<type>* is '1D', '2D' or '3D',
+  where '1D' means that the x-values have been omitted
 - *<m>* is the curve number
 - *<curve-label>* is the string given to
   the plot function as label
@@ -560,7 +602,7 @@ filename *'-'*.
 Note that plotting data in this way has some limitations: if there are
 curves plotted from volatile data it is *not* possible to plot other
 curves or functions on the same plot window using the *replot* option.
-So if you want to mix on the same plot windows volatile curves (i.e.
+So if you want to mix on the same plot window volatile curves (i.e.
 curves plotted using the *volatile* argument) together with non volatile
 ones or functions, you must plot the volatile curves as the *last* plot
 instruction.  Example:
@@ -690,20 +732,26 @@ given as argument:
 >>> myplot = gm.new_plot(plot_type='2D', title='2D plot')
 >>> x = numpy.linspace(0,100,101)
 >>> y = x * x
+>>> z = y * x / 100
 >>> gm.plot2d(myplot, x, y, label='y=x^2')
 (0, 'Ok')
 >>> gm.plot_function(myplot, 'x**2', replot=True)
 (0, 'Ok')
+>>> gm.plot2d(myplot, x, z, label='y=x^3/100', volatile=True, replot=True)
+(0, 'Ok')
 >>> gm.plot_check(myplot)
-Window number:        0
+Window number:        2
 Terminal type:        "x11"
 Persistence:          "False"
+Purge:                "True"
 Window type:          "2D"
 Window title:         "2D plot"
 Number of functions:  1
 Number of curves:     1
+Number of volatiles:  1
 X-axis range:         [None,None]
 Y-axis range:         [None,None]
+
 (0, 'Ok')
 
 
@@ -712,22 +760,25 @@ including the PID of the gnuplot process and the names of the
 datafiles:
 
 >>> gm.plot_check(myplot, expanded=True)
-Window number:        0
+Window number:        2
 Terminal type:        "x11"
 Persistence:          "False"
+Purge:                "True"
 Window type:          "2D"
 Window title:         "2D plot"
 Number of functions:  1
 Number of curves:     1
+Number of volatiles:  1
 X-axis range:         [None,None]
 Y-axis range:         [None,None]
-Gnuplot process PID:  103667
+Gnuplot process PID:  18801
 Gnuplot output file:  "/dev/stdout"
 Gnuplot errors file:  "/dev/stderr"
 Functions
 #  0: "x**2"
 Curves
-#  0: "gnuplot.out/data/gnuplot_data_w0_2D(2D plot)_c0(y=x^2).csv"
+#  0: "gnuplot.out/data/gnuplot_data_w2_2D(2D plot)_c0(y=x^2).csv"
+
 (0,'Ok')     
 
 
@@ -789,6 +840,7 @@ linked to that name (*myplot*) anymore. Example::
     Window number:        0
     Terminal type:        "x11"
     Persistence:          "False"
+    Purge:                "True"
     Window type:          "2D"
     Window title:         "None"
     Number of functions:  0
@@ -799,6 +851,7 @@ linked to that name (*myplot*) anymore. Example::
     Window number:        1
     Terminal type:        "x11"
     Persistence:          "False"
+    Purge:                "True"
     Window type:          "3D"
     Window title:         "None"
     Number of functions:  0
@@ -825,10 +878,12 @@ and are still present in the *window_list* variable. Example::
     Window number:        0
     Terminal type:        "x11"
     Persistence:          "False"
+    Purge:                "True"
     Window type:          "2D"
     Window title:         "None"
     Number of functions:  0
     Number of curves:     0
+    Number of volatiles:  0
     X-axis range:         [None,None]
     Y-axis range:         [None,None]    
 
@@ -842,10 +897,12 @@ and are still present in the *window_list* variable. Example::
     Window number:        0
     Terminal type:        "x11"
     Persistence:          "False"
+    Purge:                "True"
     Window type:          "2D"
     Window title:         "None"
     Number of functions:  0
     Number of curves:     0
+    Number of volatiles:  0    
     X-axis range:         [None,None]
     Y-axis range:         [None,None]    
 
@@ -858,42 +915,47 @@ Instead, we can still check the plot window using the *plot_list()* function,
 since it relies on the content of the *window_list* global variable, which
 was not altered by the *del* command.
     
-The *plot_close_all()* function described below closes all the plot windows
+The *plot_close_all()* function, described in the
+`Closing all the open windows at once`_ paragraph, closes all the plot windows
 (and terminates their associated gnuplot processes), including the ones 
 which are not linked to any name.
-
-
-Closing all the open windows at once
-------------------------------------
-
-The *plot_close_all()* function closes all the plot windows listed in the *window_list*
-global variable, and empties it.
-
->>> gm.plot_close_all()
-(0, 'Ok')
 
 
 Deleting the output files
 -------------------------
 
-By default, the data files associated to the plot window are *not* deleted
-when it is closed, but you can ask to delete them giving the *purge=True* argument
-to the *plot_close()* or *plot_close_all()* function:
+When a plot window is closed, the data files associated to the curves
+are deleted or not, depending on the value of its *purge* attribute,
+which was set when the plot window was opened according to the value
+of the *purge* argument passed to the *new_plot()* function.
+Examples:
 
->>> gm.plot_close(myplot, purge=True)
-(0, 'Ok')
+>>> myplot = gm.new_plot(purge=True)
 
-If the plot was opened passing the *redirect_output=True* argument, then
-the files on which the gnuplot output has been redirected will be deleted as well.
+the datafiles will be deleted each time new data is plotted (without giving
+the *replot=True* argument) and when the window is closed;
 
-The default behavior is stored in the *PURGE_FILES* global variable:
+>>> myplot = gm.new_plot(purge=False)
 
->>> print(gm.PURGE_FILES)
-False
+the datafiles will *not* be deleted each time new data is plotted and
+*not* be deleted when the window is closed.
+
+
+The default behavior is stored in the *PURGE_DATA* global variable:
+
+>>> print(gm.PURGE_DATA)
+True
+
+If the plot was opened passing the *redirect_output=True* argument,  
+the files on which the gnuplot output and errors have been redirected
+are deleted or not in the same way. If you want to preserve them,
+when the the window has the *purge* option active, you can pass the
+*keep_output=True* argument to the *plot_close()* function.
+
 
 The optional *delay* parameter specifies a time (in seconds) to wait before
 deleting the data files, after the *quit* command has been sent to gnuplot.
-This can be useful in some circumstances: for example if you want to create
+This can be useful in some circumstances, for example if you want to create
 a persistent window, plot something complex on it, and then close the gnuplot
 process leaving only the window open:
 
@@ -910,6 +972,19 @@ When the *plot_close()* function is called, it immediately sends the
 has completed the plot operation started by the *plot2d()* function.
 If the datafiles were deleted immediately after sending the *quit* command,
 they could be removed while the plot operation (plotting one million points) is still in progress.
+
+
+Closing all the open windows at once
+------------------------------------
+
+The *plot_close_all()* function closes all the plot windows listed in the *window_list*
+global variable, and empties it.
+
+>>> gm.plot_close_all()
+(0, 'Ok')
+
+By default, the function tries to delete the *gnuplot.out* directory, if it is empty.
+If you don't want to delete it, you can pass the *purge_dir=False* argument.
 
 
 Performing other actions
@@ -1116,6 +1191,8 @@ Plot data
     plot a curve from 2d data
 *plot3d()*
     plot a curve from 3d data
+*plot_box()*
+    plot a boxplot from 1d data
 *plot_curves()*
     plot several curves at the same time
 
@@ -1216,8 +1293,15 @@ which has several attributes:
 *self.data_filenames*:
      list containing the names of the datafiles related to the
      curves presently plotted on the window
+*self.n_volatiles*:
+     number of curves that have been plotted using the *volatile=True*
+     argument: they are not listed in *self.data_filenames* since
+     there are no associated data files
 *self.functions*:
      list containing the function strings [#functions]_
+*slef.purge*:
+     if True, old data files are removed when new data is plotted
+     without the *replot=True* option
 *self.error*:
      if there was an error while opening the plot
      an error message is stored here
@@ -1240,7 +1324,7 @@ of the *functions.py* module to perform their tasks:
 *self._command()*
     method used to send commands to gnuplot
 *self._quit_gnuplot()*
-    method used to close the gnuplot process and close the window
+    method used to terminate the gnuplot process and close the window
 *self._add_functions()*
     method used to add one or more mathematical expression
 *self._add_curves()*
