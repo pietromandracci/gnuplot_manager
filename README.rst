@@ -12,7 +12,7 @@ This package allows to plot data or mathematical expressions inside python,
 using the gnuplot program, in the form of 2D or 3D plots.
 
 Multiple plot windows can be opened, and a separate gnuplot process 
-is started for each of them.  The data to be plotted can be transfered
+is started for each of them.  The data to be plotted can be transferred
 to gnuplot by writing them on files, or can be sent to gnuplot inline.
 Mathematical expressions are sent directly to gnuplot as strings.
 All the package functionalities can be accessed by calling functions,
@@ -23,10 +23,8 @@ The package has been designed starting from my own needs, so only a
 very limited number of the many gnuplot functionalities have been
 implemented, but more may be added in the future:
 
-- plotting 2d graphs from data
-- plotting mathematical expressions in 2d
-- plotting 3d graphs from data
-- plotting mathematical expressions in 3d
+- plotting 2D or 3D graphs from data
+- plotting mathematical expressions in 2D or 3D
 
 The most commonly used plot settings, such as applying logarithmic scales
 or setting scale limits, can be applied by passing arguments to the functions,
@@ -48,7 +46,7 @@ although they have been tested, errors are still possible.
    >>> from gnuplot_manager.demo import main
    >>> main()
 
-   The demo will run without need of any input.
+   The demo will run without the need of any input.
     
 This package is released under a GPL licence, in the hope it can be
 useful to someone else. Feeback, bug reports, and suggestions are welcome.
@@ -256,8 +254,12 @@ Purging data files
 ------------------
 
 By default, the old datafiles are removed each time new data or functions are plotted
-on the plot window. If you want to change this behavior, preserving the data files,
+on the plot window, unless the *replot=True* option is given [#replot]_.
+If you want to change this behavior, preserving the data files,
 you can pass the *purge=False* argument to the *new_plot()* function.
+
+.. [#replot] a description of the *replot* argument is given in the
+   `Adding more curves to a plot`_ section.
    
 
 Other plot window properties
@@ -353,7 +355,7 @@ by means of the *plot_1d()* function. The function works for 2D plot windows
 only. Example:
 
 >>> y = numpy.linspace(0,100,101)
->>> gm.plot_1d(myplot2d, y, label='1D data')
+>>> gm.plot1d(myplot2d, y, label='1D data')
 (0,'Ok')
 
 .. image:: https://raw.githubusercontent.com/pietromandracci/gnuplot_manager/master/images/plot1d.png
@@ -845,6 +847,7 @@ linked to that name (*myplot*) anymore. Example::
     Window title:         "None"
     Number of functions:  0
     Number of curves:     0
+    Number of volatiles:  0
     X-axis range:         [None,None]
     Y-axis range:         [None,None]
 
@@ -856,6 +859,7 @@ linked to that name (*myplot*) anymore. Example::
     Window title:         "None"
     Number of functions:  0
     Number of curves:     0
+    Number of volatiles:  0
     X-axis range:         [None,None]
     Y-axis range:         [None,None]
     Z-axis range:         [None,None]   
@@ -1115,7 +1119,7 @@ optional string with additional options to pass to gnuplot.
 >>> gm.plot_print(myplot, terminal='png', filename='cosx.png', options='background \"#c0c000\"')
 (0, 'Ok')
 
-The file *cosx.png* is created in the *gnuplot.out/images/* directory, with the following image:
+The file *cosx.png* is created in the current working directory, with the following image:
 
 .. image:: https://raw.githubusercontent.com/pietromandracci/gnuplot_manager/master/images/cosx.png
            

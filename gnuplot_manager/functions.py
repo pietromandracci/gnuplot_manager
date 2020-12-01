@@ -136,7 +136,7 @@ def new_plot(*,
                               purge=purge)
        
     # If there were not errors during the instance creation,
-    # not apply the requested settings
+    # do not apply the requested settings
     if not plot_window.error[0]:   
         # Apply the requested plot settings
         (status, message)= plot_set(plot_window,
@@ -224,11 +224,9 @@ def plot_set(plot,
 
     if not isinstance(plot, _PlotWindow): return ERROR_NOT_A_PLOT
     if (plot.plot_type is None): return ERROR_CLOSED_PLOT
-    #if (plot.n_volatiles and replot): return ERROR_REPLOT_VOLATILE
     if (plot.n_volatiles
         and ((logx is not None) or (logy is not None) or (logz is not None))):
-        return ERROR_LOGSET_VOLATILE
-    
+        return ERROR_LOGSET_VOLATILE    
     if (replot
         and (not plot.n_volatiles)
         and (not plot.data_filenames) and
@@ -357,7 +355,6 @@ def plot_command(plot_window, string):
         ----------
 
         plot_window: the plot window to which the command must be sent
-
         string:      the string containing the gnuplot command
 
         Returns
@@ -522,7 +519,7 @@ def plot_curves(plot_window, data_list, volatile=VOLATILE, replot=False):
                                  [x2,  y2, z2, label2, options2], ... ] 
                       where:
                       - x1 contains the x-coordinates of the points to plot;
-                        for 2D plot windows only, this can be set to None, 
+                        for 2D plot windows this can be set to None, 
                         which is useful if the data are 1D, as in the case 
                         of boxplots, or if you want gnuplot to 
                         automatically provide x-values.
@@ -534,7 +531,7 @@ def plot_curves(plot_window, data_list, volatile=VOLATILE, replot=False):
                         (for 3D plot windows only)  
                       - label1 is a string, that will be used to identify the plot 
                         in the legend, or None
-                      - options1 is a string, containing additional options
+                      - options1 is a string, containing additional options,
                         or None
                       The form must be consisted with the type of plot 
                       that was defined at the plot window creation, 
@@ -888,7 +885,7 @@ def plot_clear(plot_window):
         Parameters
         ----------
 
-        plot_window: the window (instance of the _PlotWindow class) to be cleared
+        plot_window: the window to be cleared
 
         Returns
         -------
@@ -920,7 +917,7 @@ def plot_clear_all():
     if not window_list: return ERROR_NO_PLOTS    
 
     for plot_window in window_list:
-        plot_clear(plot_window)
+        plot_window._command('clear')
         
     return status, message
 
@@ -1128,10 +1125,15 @@ def plot_check(plot_window, expanded=False, printout=True, getstring=False):
                      - window number
                      - type of terminal
                      - persistence status
+                     - purge status
                      - type of window ('2D', 'histogram', '3D')
                      - window title (if given)
                      - number of functions plotted
                      - number of curves plotted
+                     - number of volatile curves plotted
+                     - x-axis range
+                     - y-axis range
+                     - z-axis range (for 3D windows only)
                      if set to True, the following information is added
                      - PID of the gnuplot process
                      - names of data files to which the output and errors
@@ -1255,6 +1257,10 @@ def plot_list(expanded=False, printout=True, getstring=False):
 def plot_close(plot_window, keep_output=False, delay=None):
     """ Closes a plot windows and exits from the related gnuplot process 
 
+        If the plot window was created calling the new_plot function with 
+        the *purge=True* argument (which is the default) the data files 
+        of the presently plotted curves are deleted.
+
         Parameters
         ----------
 
@@ -1263,9 +1269,9 @@ def plot_close(plot_window, keep_output=False, delay=None):
                       errors have been redirected, even if the window
                       was created with the *purge=True* argument                 
         delay:        an int or float number, defining the time to
-                      wait (in secons) before deleting data files;
+                      wait (in seconds) before deleting data files;
                       this can be useful if a plot is created with
-                      the persist=True option and then immediately closed,
+                      the *persist=True* option and then immediately closed,
                       since the gnuplot process could not be able to plot the
                       data before the datafiles are deleted
         Returns
@@ -1279,7 +1285,7 @@ def plot_close(plot_window, keep_output=False, delay=None):
     if not isinstance(plot_window, _PlotWindow): return ERROR_NOT_A_PLOT 
     if (plot_window.plot_type is None): return ERROR_CLOSED_PLOT    
 
-    # If requested, delete all the files associated to this plot
+    # If window has purge attribute, delete the files associated to this plot
     if plot_window.purge:
         # Remove data files but, if requested, wait a while before doing it 
         if (delay is not None): sleep(delay)
@@ -1301,7 +1307,6 @@ def plot_close(plot_window, keep_output=False, delay=None):
                     message += ('the gnuplot output file for window # '
                                 + str(plot_window.window_number)
                                 + ' was not found')
-
             # Remove gnuplot error file                
             if (plot_window.filename_err not in ('/dev/stderr', '/dev/null')):
                 try:
@@ -1325,7 +1330,11 @@ def plot_close(plot_window, keep_output=False, delay=None):
 
 
 def plot_close_all(keep_output=False, delay=None, purge_dir=PURGE_DIR):
-    """ Closes all plots 
+    """ Closes all plots.
+
+        For plot windows which were created calling the new_plot function with 
+        the *purge=True* argument (which is the default), the data files 
+        of the presently plotted curves are deleted.
 
         Parameters
         ----------
@@ -1353,6 +1362,7 @@ def plot_close_all(keep_output=False, delay=None, purge_dir=PURGE_DIR):
     while window_list:
         plot_window = window_list[-1]
         (status1, message1) = plot_close(plot_window, keep_output, delay)
+        # If there was an error closing the window, store it
         if status1: (status, message) = (status1, message1)
 
     if (purge_dir and not keep_output):

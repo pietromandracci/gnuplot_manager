@@ -37,6 +37,7 @@ Full documentation can be found at:
 https://github.com/pietromandracci/gnuplot_manager
 
 
+
 List of available functions
 ===========================
 
@@ -60,13 +61,16 @@ Create, modify, and close plot windows
 Plot data
 ---------
 
+*plot1d()*
+    plot a curve from 1d data
 *plot2d()*
     plot a curve from 2d data
 *plot3d()*
     plot a curve from 3d data
+*plot_box()*
+    plot a boxplot from 1d data
 *plot_curves()*
     plot several curves at the same time
-
 
 Plot mathematical functions
 ---------------------------
@@ -165,8 +169,15 @@ which has several attributes:
 *self.data_filenames*:
      list containing the names of the datafiles related to the
      curves presently plotted on the window
+*self.n_volatiles*:
+     number of curves that have been plotted using the *volatile=True*
+     argument: they are not listed in *self.data_filenames* since
+     there are no associated data files
 *self.functions*:
      list containing the function strings [#functions]_
+*slef.purge*:
+     if True, old data files are removed when new data is plotted
+     without the *replot=True* option
 *self.error*:
      if there was an error while opening the plot
      an error message is stored here
@@ -189,13 +200,7 @@ of the *functions.py* module to perform their tasks:
 *self._command()*
     method used to send commands to gnuplot
 *self._quit_gnuplot()*
-    method used to close the gnuplot process and close the window
-*self._data_file_2d()*
-    method used to write 2D data on datafiles
-*self._data_file_3d()*
-    method used to write 3D data on datafiles
-*self._correct_filename()*
-    method used to remove unsuitable chars from filenames
+    method used to terminate the gnuplot process and close the window
 *self._add_functions()*
     method used to add one or more mathematical expression
 *self._add_curves()*

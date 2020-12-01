@@ -62,7 +62,7 @@ class _PlotWindow:
             plot_type:       a string defining the type of plot
                              must be one of the strings in PLOT_TYPES
             title:           a string used as the title of the plot
-            persistence:     if True, the plot window will not close 
+            persistence:     if True, the window on the screen will not close 
                              after the gnuplot process is terminated
             redirect_output: True:  save gnuplot otuput and errors to files
                              False: send then to /dev/stdout and /dev/stderr
@@ -80,7 +80,7 @@ class _PlotWindow:
             self.persistence:     True if the window is persistent
             self.filename_out:    file to which gnuplot output is redirected 
             self.filename_err:    file to which gnuplot error messages
-                                   are redirected
+                                  are redirected
             self.plot_type:       a string defining the type of plot
             self.n_axes:          number of plot axes (2 for 2D plots, 3 for 3D ones)
             self.xmin:            minimum of x-axis range (initialized to None)
@@ -125,7 +125,7 @@ class _PlotWindow:
         # Store the persistence status
         self.persistence = persistence
 
-        # Store the requested purge status
+        # Store the purge status
         self.purge = purge
         
         # Store the window title (may be None)
@@ -169,6 +169,7 @@ class _PlotWindow:
             # Create the directories to save gnuplot output and errors
             if not path.exists(DIRNAME):     mkdir(DIRNAME)
             if not path.exists(DIRNAME_OUT): mkdir(DIRNAME_OUT)
+            # Create the filenames
             if not path.exists(DIRNAME_ERR): mkdir(DIRNAME_ERR)
             self.filename_out = path.join( DIRNAME_OUT, FILENAME_OUT
                                            + '_w_' + str(self.window_number) )
@@ -177,18 +178,21 @@ class _PlotWindow:
             if self.title is not None:
                 self.filename_out += '(' + correct_filename(self.title) + ')'
                 self.filename_err += '(' + correct_filename(self.title) + ')'
+            # Start the gnuplot process with output redirected to files
             self.gnuplot_process = Popen(exec_list,
                                          stdin=PIPE,
                                          stdout=open(self.filename_out, 'w'),
                                          stderr=open(self.filename_err, 'w'),
                                          universal_newlines=True)
         elif redirect_output is False:
+            # Start the gnuplot process without redirection
             self.filename_out = '/dev/stdout'
             self.filename_err = '/dev/stderr'               
             self.gnuplot_process = Popen(exec_list,
                                          stdin=PIPE,
                                          universal_newlines=True)            
         else:
+            # Start the gnuplot process silenced
             self.filename_out = '/dev/null'
             self.filename_err = '/dev/null'        
             self.gnuplot_process = Popen(exec_list,
@@ -208,14 +212,14 @@ class _PlotWindow:
             
             
     def _command(self, command_string):
-        """ Send a command to the gnuplot process.
-
-            NOTE: no check is made that the string is a valid gnuplot command
+        """ Send a command to the gnuplot process.           
 
             Parameters
             ----------
 
             command_string: string containing a gnuplot command
+                            NOTE: no check is made that the string 
+                            is a valid gnuplot command
         """
 
         self.gnuplot_process.stdin.write(command_string + EOL)
@@ -232,8 +236,8 @@ class _PlotWindow:
         """
 
         try:
-            gnuplot_last_output = self.gnuplot_process.communicate(input='quit',
-                                                                   timeout=TIMEOUT_QUIT)
+            gnuplot_last_output = self.gnuplot_process.communicate(
+                input='quit', timeout=TIMEOUT_QUIT)
         except TimeoutExpired:
             self.gnuplot_process.kill()
             gnuplot_last_output = self.gnuplot_process.communicate()
@@ -302,7 +306,6 @@ class _PlotWindow:
         else:                          command_string = 'plot '
               
         for i in range(len(function_list)):
-
             # Add the function to the function list
             self.functions.append(str(function_list[i][0]))
             
@@ -338,7 +341,7 @@ class _PlotWindow:
                                      [x2,   y2, z2, label2, options2], ... ] 
                           where:
                           - x1 contains the x-coordinates of the points to plot;
-                            for 2D plot windows only this can be set to None, 
+                            for 2D plot windows this can be set to None, 
                             which is useful if the data are 1D, as in the case 
                             of boxplots, or if you want gnuplot to 
                             automatically provide x-values.
@@ -374,8 +377,7 @@ class _PlotWindow:
             return ERROR_NO_REPLOT
         
         # Check consistency of the whole list
-        for i in range(len(data_list)):
-            
+        for i in range(len(data_list)):            
             # Check if xdata are missing in this item
             xmissing = False
             if (data_list[i][0] is None):
@@ -461,8 +463,7 @@ class _PlotWindow:
 
         # Save the old number of curves before adding the new ones
         n_curves = len(self.data_filenames)          
-        for i in range(len(data_list)):         
-                        
+        for i in range(len(data_list)):                        
             # Read the curve label, if given
             if (data_list[i][self.n_axes] is None):
                 label = None
@@ -476,7 +477,7 @@ class _PlotWindow:
                 options = str(data_list[i][self.n_axes+1])
                         
             # Define the unique filename for the data file
-            # or "-" for volatile data
+            # or use the gnuplot special filename '-' for volatile data
             if volatile:
                 filename = FILENAME_VOLATILE
             else:
@@ -494,7 +495,7 @@ class _PlotWindow:
                 string += FILENAME_DATA_EXT
                 filename = path.join( DIRNAME_DATA, string )
 
-            # Add filename to the list, or increase volatile data counter
+            # Add filename to list, or increase volatile data counter
             if volatile:
                 self.n_volatiles += 1
             else:

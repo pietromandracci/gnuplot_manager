@@ -31,11 +31,11 @@ except FileNotFoundError:
 
 # Allowed gnuplot terminal types and default one
 DEFAULT_TERM       = 'x11'
-TERMINALS          = ('x11', 'wxt')
+TERMINALS          = {'x11', 'wxt'}
 DEFAULT_PRINT_TERM = 'png'
-PRINT_TERMINALS    = ('png', 'jpeg', 'eps', 'gif', 'svg',
+PRINT_TERMINALS    = {'png', 'jpeg', 'eps', 'gif', 'svg',
                       'latex', 'postscript','pdfcairo',
-                      'dumb')
+                      'dumb'}
 PRINT_EXT          = { 'png':        '.png',
                        'jpeg':       '.jpg',
                        'eps':        '.eps',
@@ -55,13 +55,14 @@ DEFAULT_YPOS       = 100
 
 # Plot window types and default one
 DEFAULT_TYPE       = '2D'
-PLOT_TYPES         = ('2D', '3D')
+PLOT_TYPES         = {'2D', '3D'}
 
 # Plotting styles and default one
 DEFAULT_STYLE      = 'points'
-ALLOWED_STYLES_2D  = ('points', 'dots', 'lines', 'linespoints',
-                      'histeps', 'fsteps', 'boxplot')
-ALLOWED_STYLES_3D  = ('points', 'dots', 'lines', 'linespoints')
+ALLOWED_STYLES_2D  = {'points', 'dots', 'lines', 'linespoints','impulses', 
+                      'steps', 'histeps', 'fsteps', 'boxes', 'histograms',
+                      'boxplot'}
+ALLOWED_STYLES_3D  = {'points', 'dots', 'lines', 'linespoints'}
 
 # Separator char and end-of-line char
 SEP                = '\t'
@@ -70,7 +71,7 @@ EOL                = '\n'
 # Name of the output directory
 DIRNAME            = 'gnuplot.out'
 
-# Default name of output file
+# Default name of print file
 PRINT_FILENAME     = 'output_window#'
 
 # Names of subdirs for data and gnuplot output
@@ -79,23 +80,22 @@ DIRNAME_OUT        = path.join(DIRNAME, 'output')
 DIRNAME_ERR        = path.join(DIRNAME, 'errors')
 
 # Strings used to construct filenames
-FILENAME_VOLATILE  = "-"
+FILENAME_VOLATILE  = '-'
 FILENAME_DATA      = 'gnuplot_data'
 FILENAME_DATA_EXT  = '.csv'
 FILENAME_OUT       = 'gnuplot_out'
 FILENAME_ERR       = 'gnuplot_err'
 
 # Characters that are not allowed in filenames
-INVALID_CHARS      = ('\000', '/', '\\', '*', '!', '|','\"', '\'', '>', '<', ',', '\n', '\t')
+INVALID_CHARS      = {'\000', '/', '\\', '*', '!', '|','\"', '\'',
+                      '>', '<', ',', '\n', '\t'}
 # The invalid characters are substituted with this one
 SUBSTITUTE_CHAR    = '_'
 
 # Default values of the purge options
-
 # If True, old data files are deleted by default each time new data is plotted
 # and when a window is closed
 PURGE_DATA         = True
-
 # If True, the directories are removed (if empty) when
 # all the plots are closed
 PURGE_DIR          = True
