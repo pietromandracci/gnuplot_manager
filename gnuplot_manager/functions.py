@@ -659,7 +659,7 @@ def plot_print(plot_window,
                         (e.g. 'png', 'jpeg', 'gif') mus be one of the
                         terminal listed in the PRINT_TERMINALS global variable
         filename:       the file to which the image must be saved
-                        if non given, or set to None, a default one is used
+                        if not given, or set to None, a default one is used
         options:        a string with terminal options,
                         read gnuplot documentations for help
 

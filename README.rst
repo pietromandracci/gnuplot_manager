@@ -893,10 +893,11 @@ and are still present in the *window_list* variable. Example::
 
     (0, 'Ok') 
     >>> del myplot
-    >>> plot_check(myplot)
+    >>> gm.plot_check(myplot)
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
-    NameError: name 'plot_check' is not defined    
+    NameError: name 'myplot' is not defined
+
     >>> gm.plot_list()
     Window number:        0
     Terminal type:        "x11"
@@ -912,12 +913,23 @@ and are still present in the *window_list* variable. Example::
 
     (0, 'Ok')    
 
-After deleting the *myplot* name, it is not possible anymore to check the
-plot window by means of the *plot_check()* function, because it requires that
-the name of the plot window is given, but the window has no name anymore.
+After deleting the *myplot* name, it is not possible to check the plot window
+by means of the *plot_check()* function, because the window is not anymore linked
+to the name *myplot*.
 Instead, we can still check the plot window using the *plot_list()* function,
 since it relies on the content of the *window_list* global variable, which
 was not altered by the *del* command.
+
+You could also create a plot window (i.e. a *_PlotWindow* instance) withou giving
+a name to it:
+
+>>> x = linspace(0,100,101)
+>>> gm.plot1d(gm.new_plot(),x)
+
+in this way, the plot window is created and passed directly as argument to
+the plot function (*plot1d()* in this example) without giving a name to it.
+Also in this case, the newly created plot window will appear in  the output
+of the *plot_list()* function.
     
 The *plot_close_all()* function, described in the
 `Closing all the open windows at once`_ paragraph, closes all the plot windows
@@ -963,12 +975,12 @@ This can be useful in some circumstances, for example if you want to create
 a persistent window, plot something complex on it, and then close the gnuplot
 process leaving only the window open:
 
->>> myplot = gm.new_plot(persistence=True)
+>>> myplot = gm.new_plot(persistence=True, purge=True)
 >>> x = numpy.linspace(0, 1000, 1000000)
 >>> y = x * x
 >>> gm.plot2d(myplot, x, y)
 (0, 'Ok')
->>> gm.plot_close(myplot, purge=True, delay=1)
+>>> gm.plot_close(myplot, delay=1)
 (0, 'Ok')
 
 When the *plot_close()* function is called, it immediately sends the
@@ -982,7 +994,8 @@ Closing all the open windows at once
 ------------------------------------
 
 The *plot_close_all()* function closes all the plot windows listed in the *window_list*
-global variable, and empties it.
+global variable, and empties it. It works calling the *plot_close()* function, so it gets
+the same arguments.
 
 >>> gm.plot_close_all()
 (0, 'Ok')
@@ -1110,7 +1123,7 @@ Exporting a plot window to a file
 A plot can be exported to a file in various formats using the
 *plot_print()* function. The first argument passed must be the
 *_PlotWindow* instance of the plot you want to export, followed
-by: the terminal used to create the image, the filename and an
+by: the terminal used to create the image, the filename, and an
 optional string with additional options to pass to gnuplot.
 
 >>> myplot = gm.new_plot()
@@ -1305,9 +1318,9 @@ which has several attributes:
      list containing the function strings [#functions]_
 *slef.purge*:
      if True, old data files are removed when new data is plotted
-     without the *replot=True* option
+     without the *replot=True* option or when the window is closed
 *self.error*:
-     if there was an error while opening the plot
+     if there was an error while creating the plot window,
      an error message is stored here
 
 .. [#window_number] Note that this number is *not* the index that identifies the

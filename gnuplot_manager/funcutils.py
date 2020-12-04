@@ -59,11 +59,17 @@ def data2string_1d(data, eol=EOL):
  
         A string with the data in the form requested by gnuplot
     """
-    s = ''
+    #s = ''
+    #for value in data:
+    #    s += str(value) + eol
+    #s += 'e' + eol
+    #return s
+    
+    l = []
     for value in data:
-        s += str(value) + eol
-    s += 'e' + eol
-    return s
+        l.append(str(value))
+    l.append('e')
+    return eol.join(l) + eol
 
 
 def data2string_2d(x_data, y_data, eol=EOL):
@@ -86,11 +92,17 @@ def data2string_2d(x_data, y_data, eol=EOL):
  
         A string with the data in the form requested by gnuplot
     """
-    s = ''
+    #s = ''
+    #for i in range(len(x_data)):
+    #    s += str(x_data[i]) + ' ' + str(y_data[i]) + eol       
+    #s += 'e' + eol    
+    #return s
+
+    l = []
     for i in range(len(x_data)):
-        s += str(x_data[i]) + ' ' + str(y_data[i]) + eol
-    s += 'e' + eol
-    return s
+        l.append( ' '.join( (str(x_data[i]), str(y_data[i])) ) )
+    l.append('e')
+    return eol.join(l) + eol
                
 
 def data2string_3d(x_data, y_data, z_data, eol=EOL):
@@ -106,7 +118,7 @@ def data2string_3d(x_data, y_data, z_data, eol=EOL):
 
         x_data:   data representing x coordinates of the points to plot
         y_data:   data representing y coordinates of the points to plot
-        z_data:   data representing z coordinates of the points to plot
+         z_data:   data representing z coordinates of the points to plot
         eol:      end-of-line character
 
         Returns
@@ -114,11 +126,16 @@ def data2string_3d(x_data, y_data, z_data, eol=EOL):
  
         A string with the data in the form requested by gnuplot
     """
-    s = ''
+    #s = ''
+    #for i in range(len(x_data)):
+    #    s += str(x_data[i]) + ' ' + str(y_data[i]) + ' ' + str(z_data[i]) + eol       
+    #s += 'e' + eol
+    #return s
+    l = []
     for i in range(len(x_data)):
-        s += str(x_data[i]) + ' ' + str(y_data[i]) + ' ' + str(z_data[i]) + eol
-    s += 'e' + eol
-    return s
+        l.append( ' '.join( (str(x_data[i]), str(y_data[i]), str(z_data[i])) ) )
+    l.append('e')
+    return eol.join(l) + eol
     
 
 def data_file_1d(x_data, filename, eol=EOL):

@@ -304,23 +304,29 @@ class _PlotWindow:
         if replot:                     command_string = 'replot '
         elif (self.plot_type == '3D'): command_string = 'splot '
         else:                          command_string = 'plot '
+
+        command_list = []
               
-        for i in range(len(function_list)):
+        for function_item in function_list:
+            # Initialize the command string for this fucntion
+            function_command_string = ''
             # Add the function to the function list
-            self.functions.append(str(function_list[i][0]))
+            self.functions.append(str(function_item[0]))
             
             # Read the label, if given
-            if (function_list[i][1] is None): label = None
-            else:                             label = str(function_list[i][1])
+            if (function_item[1] is None): label = None
+            else:                          label = str(function_item[1])
             
             # Add  to the command string the plot command for this function
-            command_string += str(function_list[i][0])
+            function_command_string += str(function_item[0])
             if (label is not None):
-                command_string += ' title \"' + str(label) + '\"'
-            if (function_list[i][2] is not None):
-                command_string += ' ' + str(function_list[i][2])
-            if (i < len(function_list) - 1):
-                command_string += ', '
+                function_command_string += ' title \"' + str(label) + '\"'
+            if (function_item[2] is not None):
+                function_command_string += ' ' + str(function_item[2])
+                
+            command_list.append(function_command_string)
+
+        command_string += ', '.join(command_list)
                         
         # Send command string to gnuplot   
         self._command(command_string)
@@ -376,10 +382,18 @@ class _PlotWindow:
         if (replot and (not self.data_filenames) and (not self.functions)):
             return ERROR_NO_REPLOT
         
-        # Check consistency of the whole list
-        for i in range(len(data_list)):            
-            # Check if xdata are missing in this item
-            xmissing = False
+        # Check consistency of the each data list item
+        for i in range(len(data_list)):
+            # Check the number of data given
+            if (len(data_list[i]) != self.n_axes + 2):
+                (status, message) = ERROR_PLOT_PARAMETERS
+                if len(data_list) > 1: message += ' in list item # ' + str(i)
+                message += ( ': ' +  str(self.n_axes + 2)
+                             + ' items expected, given '
+                             + str(len(data_list[i])) )
+                return (status, message)            
+            
+            # Check if xdata are missing in this item            
             if (data_list[i][0] is None):
                 xmissing = True
                 len_x = None
@@ -390,19 +404,20 @@ class _PlotWindow:
                     message += ': missing x-data in a 3D plot window'
                     return status, message
             else:
-                # Transform single x-numbers to lists
+                xmissing = False
+                
+            # Transform single numbers to lists
+            if not xmissing:
                 try:
                     len_x = len(data_list[i][0])
                 except TypeError:
                     data_list[i][0] = [ data_list[i][0] ]
                     len_x = 1
-            # Transform single y-numbers to lists        
             try:
                 len_y = len(data_list[i][1])
             except TypeError:
                 data_list[i][1] = [ data_list[i][1] ]
                 len_y = 1
-            # For a 3D plot, Check z values also
             if (self.n_axes == 3):
                 # Transform single z-numbers to lists
                 try:
@@ -411,15 +426,8 @@ class _PlotWindow:
                     data_list[i][2] = [ data_list[i][2] ]
                     len_z = 1
                     
-            # Check consistency of the data        
-            if (len(data_list[i]) != self.n_axes + 2):
-                (status, message) = ERROR_PLOT_PARAMETERS
-                if len(data_list) > 1: message += ' in list item # ' + str(i)
-                message += ( ': ' +  str(self.n_axes + 2)
-                             + ' items expected, given '
-                             + str(len(data_list[i])) )
-                return (status, message)
-            elif ( (not xmissing) and (len_x != len_y) ):
+            # Check consistency of the data lengths
+            if ( (not xmissing) and (len_x != len_y) ):
                 (status, message) = ERROR_PLOT_PARAMETERS
                 if len(data_list) > 1:  message += ' in list item # ' + str(i)
                 message += ': x and y data have different sizes'
@@ -461,20 +469,27 @@ class _PlotWindow:
         elif (self.plot_type == '3D'): command_string = 'splot '
         else:                          command_string = 'plot '
 
+        # Initialize the list in which commands for each curve
+        # will be stored
+        command_list = []
+        
         # Save the old number of curves before adding the new ones
-        n_curves = len(self.data_filenames)          
-        for i in range(len(data_list)):                        
+        n_curves = len(self.data_filenames)       
+        for data_item in data_list:
+            # Initialize the string for this curve
+            curve_command_string = ''
+            
             # Read the curve label, if given
-            if (data_list[i][self.n_axes] is None):
+            if (data_item[self.n_axes] is None):
                 label = None
             else:
-                label = str(data_list[i][self.n_axes])
+                label = str(data_item[self.n_axes])
 
             # Read additional options, if given
-            if (data_list[i][self.n_axes+1] is None):
+            if (data_item[self.n_axes+1] is None):
                 options = None
             else:
-                options = str(data_list[i][self.n_axes+1])
+                options = str(data_item[self.n_axes+1])
                         
             # Define the unique filename for the data file
             # or use the gnuplot special filename '-' for volatile data
@@ -482,18 +497,18 @@ class _PlotWindow:
                 filename = FILENAME_VOLATILE
             else:
                 curve_number = n_curves + i
-                string = FILENAME_DATA 
-                string += '_w' + str(self.window_number)
-                if (self.plot_type == '3D')   : string += '_3D'
-                elif (data_list[i][0] is None): string += '_1D'
-                else:                           string += '_2D'        
+                name_string = FILENAME_DATA 
+                name_string += '_w' + str(self.window_number)
+                if (self.plot_type == '3D'): name_string += '_3D'
+                elif (data_item[0] is None): name_string += '_1D'
+                else:                        name_string += '_2D'        
                 if self.title is not None:
-                    string += '(' + correct_filename(self.title) + ')'
-                string += '_c' + str(curve_number)
+                    name_string += '(' + correct_filename(self.title) + ')'
+                name_string += '_c' + str(curve_number)
                 if label is not None:
-                    string += '(' + correct_filename(label) + ')' 
-                string += FILENAME_DATA_EXT
-                filename = path.join( DIRNAME_DATA, string )
+                    name_string += '(' + correct_filename(label) + ')' 
+                name_string += FILENAME_DATA_EXT
+                filename = path.join( DIRNAME_DATA, name_string )
 
             # Add filename to list, or increase volatile data counter
             if volatile:
@@ -504,32 +519,34 @@ class _PlotWindow:
             # Save data to data files, unless they are volatile
             if not volatile:
                 if (self.plot_type == '3D'):
-                    data_file_3d( data_list[i][0],
-                                  data_list[i][1],
-                                  data_list[i][2],
+                    data_file_3d( data_item[0],
+                                  data_item[1],
+                                  data_item[2],
                                   filename )
 
                 elif (data_list[i][0] is None):
-                    data_file_1d( data_list[i][1],
+                    data_file_1d( data_item[1],
                                   filename )
 
                 else:
-                    data_file_2d( data_list[i][0],
-                                  data_list[i][1],
+                    data_file_2d( data_item[0],
+                                  data_item[1],
                                   filename )
 
-            # Add plot command to the command string
-            command_string += '\"' + filename + '\"'
+            # Add plot command to the command list
+            curve_command_string += '\"' + filename + '\"'
             if (label is None):
                 # If we don't set a title, gnuplot automatically
                 # uses the data file name, so we set "" as title
-                command_string += ' title \"\"'
+                curve_command_string += ' title \"\"'
             else:
-                command_string += ' title \"' + label + '\"'
+                curve_command_string += ' title \"' + label + '\"'
             if (options is not None):
-                command_string += ' ' + options
-            if (i < len(data_list) - 1):
-                command_string += ', '
+                curve_command_string += ' ' + options
+                
+            command_list.append(curve_command_string)
+
+        command_string += ', '.join(command_list)
 
         # For volatile data, add the datastrings          
         if volatile:
@@ -537,15 +554,15 @@ class _PlotWindow:
             for data in data_list:
                 if (self.plot_type == '3D'):
                     command_string += data2string_3d(data[0],
-                                                     data[1],
-                                                     data[2])
+                                                   data[1],
+                                                   data[2])
 
                 elif (data[0] is None):
                     command_string += data2string_1d(data[1])
 
                 else:
                     command_string += data2string_2d(data[0],
-                                                     data[1])
+                                                   data[1])
                         
         # Send command string to gnuplot   
         self._command(command_string)
