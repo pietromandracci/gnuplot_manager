@@ -5,10 +5,23 @@ Version 0.1.5
 Modified functions
 ------------------
 
+*plot_check()* and *plot_list()*
+    now give an additional information: the index of the plot window
+    inside of the *window_list* global variable
+
 *plot_print()* and *plot_print_all()*
     now accept the *dirname* argument, by which it is possible
-    to specify a directory where files must be saved
+    to specify the directory where files must be saved.
 
+Some parts of some functions have been rewritten, without
+changing the way they are called, in a more optimized way
+(at least I hope).
+
+Documentation and testing
+-------------------------
+
+The *README.rst* file was updated.
+    
 
 =============
 Version 0.1.4
@@ -50,7 +63,7 @@ Modified functions
     dataset only y-values are given.
 
 *plot_close()*
-    now the datafiles are deleted or not dependind of the window
+    now the datafiles are deleted or not depending if the window
     has been opened with the *purge*options
 
 *plot_close_all()*
