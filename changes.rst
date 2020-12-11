@@ -1,4 +1,16 @@
 =============
+Version 0.1.5
+=============
+
+Modified functions
+------------------
+
+*plot_print()* and *plot_print_all()*
+    now accept the *dirname* argument, by which it is possible
+    to specify a directory where files must be saved
+
+
+=============
 Version 0.1.4
 =============
 

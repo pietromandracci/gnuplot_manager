@@ -117,9 +117,9 @@ or also
    >>> import numpy
    >>> import gnuplot_manager as gm
 
-   numpy is used in the examples to generate some data to be plotted, but the package
-   does not rely on it, and the plot functions can handle lists, tuples, or other
-   types of data.
+   numpy is used in the examples to generate some data to be plotted, but the
+   *gnuplot_manager* package does not rely on it, and the plot functions can
+   handle lists, tuples, or other types of data.
 
 Checking gnuplot installation at the module import
 --------------------------------------------------
@@ -153,52 +153,42 @@ The *new_plot()* function
 
 To open a new plot window, use the *new_plot()* function
 
->>> myplot1 = gm.new_plot(plot_type='2D', title='My 2D Plot')
+>>> myplot2d = gm.new_plot(plot_type='2D', title='My 2D Plot')
 
-The function returns an instance of the *_PlotWindow* class.
+The function returns an instance of the *_PlotWindow* class. Note that
+the plot window does not appear on the screen until you plot
+something on it. 
 
-Note that the plot window does not appear on the screen until you plot
-something on it.
+You can specify 2 types of plot: '2D' and '3D', with '2D' as default.
+If you give a title to the window, passing the *title* argument
+to the *new_plot()* function, it will be  shown on the window, when
+something will be plotted on it.  All the arguments are optional:
+if the function is called without passing any argument, it returns
+a '2D' plot without a title.
 
 .. note:: In the following, the options of the *new_plot()* function
    are explained: if you want to learn immediately how to plot something,
    jump to the `Plotting from data`_ or `Plotting mathematical functions`_
    sections.
 
-You can specify 2 types of plot: '2D' and '3D', with '2D' as default.
-If you give a title to the window, giving the *title* argument,
-it will be printed on the window when something is plotted on it.
-
-All the arguments are optional, the command:
-
->>> myplot2 = gm.new_plot()
-
-opens a '2D' plot without a title.
+Errors during window creation
+-----------------------------
 
 If invalid or inconsisted arguments are given to the *new_plot()* function,
 a plot window is created using default values, and a tuple with a number
-and an error message is stored in the *error* attribute of the *_PlotWindow* instance.
-Examples:
+and an error message is stored in the *error* attribute of the *_PlotWindow*
+instance. Examples:
 
->>> myplot3 = gm.new_plot(plot_type='4D')
->>> print(myplot3.error)
+>>> myplot = gm.new_plot(plot_type='4D')
+>>> print(myplot.error)
 (14, 'unknown plot type "4D", using default "2D"')
-
-.. note:: If you have tried all the examples described up to now, you have
-   opened three *_PlotWindow* instances, none of which has opened a window on the screen,
-   since there is nothing plotted yet.  You can  close all the open plot windows,
-   terminating the associated gnuplot terminals, using the *plot_close_all()*
-   function, described in the `Closing plot windows`_  section:
-     
-   >>> gm.plot_close_all()
-   (0, 'Ok')
    
 
 Persistence
 -----------
 
 If you give the *persistence=True* argument when opening a new plot, 
-the window will remain visible after the gnuplot process has been closed, 
+the window will remain visible after the gnuplot process has been terminated, 
 as described in the `Closing plot windows`_ section.
 However, some operations, such as zooming and rescaling, may 
 not be possible after the gnuplot process has been shut down.
@@ -216,7 +206,7 @@ Gnuplot output management
 
 When you open a new plot window, you can specify how you like to treat 
 the output of the associated gnuplot process, passing the 
-*redirect_output* argument:
+*redirect_output* argument to the *new_plot()* function:
 
 *redirect_output = False* 
     gnuplot output and errors are sent to */dev/stdout* and */dev/stderr*
@@ -295,13 +285,15 @@ If you want to open a plot window using gnuplot defaults, you can pass the
 
 >>> myplot = gm.new_plot(gnuplot_default=True, title='Using gnuplot defaults')
 
-.. note:: if you have tried the examples above, it is better that you call the
-   *plot_close_all()* function to close all the plot windows opened in memory
-   (none of which has something plotted yet):
-
+.. note:: If you have tried some of the examples described up to now, you have
+   opened several *_PlotWindow* instances, none of which has opened a window
+   on the screen, since there is nothing plotted yet. You can  close all the
+   open plot windows,  terminating the associated gnuplot terminals, using the
+   *plot_close_all()* function, described in the `Closing plot windows`_  section:
+     
    >>> gm.plot_close_all()
-   (0,'Ok')
-
+   (0, 'Ok')
+   
 
 Plotting from data
 ==================
@@ -309,7 +301,7 @@ Plotting from data
 Plotting 2D curves from data
 ----------------------------
 
-Before plotting 2D data, a 2D plot window must be opened first, as described
+Before plotting 2D data, a 2D plot window must be opened first, as was described
 in the `Creating a new plot window`_ section:
 
 >>> myplot2d = gm.new_plot(plot_type='2D', title='My 2D Plot')
@@ -532,13 +524,14 @@ you want to operate, while the second is the list:
 
 .. image:: https://raw.githubusercontent.com/pietromandracci/gnuplot_manager/master/images/plot_curves-2.png
 
-You can also use the function *plot_curves()* to plot a single curve, but the list
+You can also use the function *plot_curves()* to plot a single curve,
+which allows to give additional options to gnuplot, but then the list
 must have a single element, which is itself a list of 4 or 5 elements, 
 so do not forget to put *double square brackets*:
 
 >>> x1 = numpy.linspace(0,100,101)
 >>> y1 = x1 * x1
->>> gm.plot_curves(myplot2d, [ [ x1, y1, 'only one curve', None] ])
+>>> gm.plot_curves(myplot2d, [ [ x1, y1, 'only one curve', 'with linespoints'] ])
 (0, 'Ok')
 
 .. image:: https://raw.githubusercontent.com/pietromandracci/gnuplot_manager/master/images/plot_curves-3.png
@@ -618,8 +611,8 @@ instruction.  Example:
 
 .. image:: https://raw.githubusercontent.com/pietromandracci/gnuplot_manager/master/images/volatile.png
 
-Note that while volatile data are plotted on a plot window, gnuplot
-does not allow to toggle logarithmic scales.
+Note that if there are volatile data are plotted on a plot window, gnuplot
+does not allow to toggle logarithmic scales on it.
 
 
 Plotting mathematical functions
@@ -660,7 +653,6 @@ it yet:
 If the *label* argument is not given or is set to *None*, gnuplot will automatically
 use the function string as a label for the plot legend. If you don't want any label to be shown,
 pass the argument *label=""* (empty string).
-
 
 
    
@@ -709,14 +701,15 @@ is itself a list of 3 strings:
 .. image:: https://raw.githubusercontent.com/pietromandracci/gnuplot_manager/master/images/plot_functions-3.png
 
 If you don't want to set labels manually, put *None* in their place and gnuplot
-will automatically create them, or put "" (empty string) and they will not be set.
+will automatically create them, or put "" (empty string) and no label will be shown.
 
 You can pass the *replot=True* argument to plot functions without 
 deleting anything was plotted before.
 
-A single math expression can be plotted also (remember double square brackets):
+A single math expression can be plotted also, with the possibility to give additional
+options to gnuplot (remember double square brackets):
 
->>> gm.plot_functions(myplot2d, [ ['x*x', 'y=x^2', None] ])
+>>> gm.plot_functions(myplot2d, [ ['x*x', 'y=x^2', 'with linespoints'] ])
 (0, 'Ok')
 
 .. image:: https://raw.githubusercontent.com/pietromandracci/gnuplot_manager/master/images/plot_functions-4.png
@@ -742,7 +735,8 @@ given as argument:
 >>> gm.plot2d(myplot, x, z, label='y=x^3/100', volatile=True, replot=True)
 (0, 'Ok')
 >>> gm.plot_check(myplot)
-Window number:        2
+Window index:         0
+Window number:        0
 Terminal type:        "x11"
 Persistence:          "False"
 Purge:                "True"
@@ -753,16 +747,15 @@ Number of curves:     1
 Number of volatiles:  1
 X-axis range:         [None,None]
 Y-axis range:         [None,None]
-
 (0, 'Ok')
-
 
 If the *expanded=True* argument is given, it prints more information,
 including the PID of the gnuplot process and the names of the
 datafiles:
 
 >>> gm.plot_check(myplot, expanded=True)
-Window number:        2
+Window index:         0
+Window number:        0
 Terminal type:        "x11"
 Persistence:          "False"
 Purge:                "True"
@@ -773,15 +766,23 @@ Number of curves:     1
 Number of volatiles:  1
 X-axis range:         [None,None]
 Y-axis range:         [None,None]
-Gnuplot process PID:  18801
+Gnuplot process PID:  58937
 Gnuplot output file:  "/dev/stdout"
 Gnuplot errors file:  "/dev/stderr"
 Functions
 #  0: "x**2"
 Curves
-#  0: "gnuplot.out/data/gnuplot_data_w2_2D(2D plot)_c0(y=x^2).csv"
-
+#  0: "gnuplot.out/data/gnuplot_data_w0_2D(2D plot)_c0(y=x^2).csv"
 (0,'Ok')     
+
+.. note:: *Window index* is the index of the plot window inside the global
+   variable *window_list*, while *Window number* is a unique number attributed
+   to the plot window when it is created, which is used mainly to generate
+   unique names for the data files. The former may change [#window_index]_,
+   while the latter is fixed for the plot window life.
+
+.. [#window_index] As an example, if the first window in *window_list* is closed,
+   being removed from the list and causing a shift of the indexes.
 
 
 The function takes two more arguments:
@@ -797,7 +798,8 @@ Printing information on all plot windows
 ----------------------------------------
 
 The *plot_list()* function prints the same information given by the
-*plot_check()* function  for all open windows. 
+*plot_check()* function, for all the open windows. 
+
 
 
 Closing plot windows
@@ -839,6 +841,7 @@ linked to that name (*myplot*) anymore. Example::
     >>> myplot = gm.new_plot()
     >>> myplot = gm.new_plot(plot_type='3D')
     >>> gm.plot_list()
+    Window index:         0
     Window number:        0
     Terminal type:        "x11"
     Persistence:          "False"
@@ -851,6 +854,7 @@ linked to that name (*myplot*) anymore. Example::
     X-axis range:         [None,None]
     Y-axis range:         [None,None]
 
+    Window index:         1
     Window number:        1
     Terminal type:        "x11"
     Persistence:          "False"
@@ -862,8 +866,8 @@ linked to that name (*myplot*) anymore. Example::
     Number of volatiles:  0
     X-axis range:         [None,None]
     Y-axis range:         [None,None]
-    Z-axis range:         [None,None]   
-   (0, 'Ok')
+    Z-axis range:         [None,None]
+    (0, 'Ok')
 
 Here we have used the *plot_list()* function, which is described in the
 `Checking window properties`_ section, to list all the open windows.
@@ -878,7 +882,8 @@ the associated *_PlotWindow* instance and its gnuplot process are *not* closed,
 and are still present in the *window_list* variable. Example::
 
     >>> myplot = gm.new_plot()
-    >>> gm.plot_list()
+    >>> gm.plot_check(myplot)
+    Window index:         0
     Window number:        0
     Terminal type:        "x11"
     Persistence:          "False"
@@ -889,9 +894,9 @@ and are still present in the *window_list* variable. Example::
     Number of curves:     0
     Number of volatiles:  0
     X-axis range:         [None,None]
-    Y-axis range:         [None,None]    
-
+    Y-axis range:         [None,None]
     (0, 'Ok') 
+
     >>> del myplot
     >>> gm.plot_check(myplot)
     Traceback (most recent call last):
@@ -899,6 +904,7 @@ and are still present in the *window_list* variable. Example::
     NameError: name 'myplot' is not defined
 
     >>> gm.plot_list()
+    Window index:         0
     Window number:        0
     Terminal type:        "x11"
     Persistence:          "False"
@@ -907,20 +913,20 @@ and are still present in the *window_list* variable. Example::
     Window title:         "None"
     Number of functions:  0
     Number of curves:     0
-    Number of volatiles:  0    
+    Number of volatiles:  0
     X-axis range:         [None,None]
-    Y-axis range:         [None,None]    
-
-    (0, 'Ok')    
+    Y-axis range:         [None,None]
+    (0, 'Ok') 
 
 After deleting the *myplot* name, it is not possible to check the plot window
-by means of the *plot_check()* function, because the window is not anymore linked
-to the name *myplot*.
-Instead, we can still check the plot window using the *plot_list()* function,
-since it relies on the content of the *window_list* global variable, which
-was not altered by the *del* command.
+by  *plot_check(myplot)*, because the window is not anymore linked to that name.
+However, we can still check the plot window using the *plot_list()* function,
+since it relies on the content of the *window_list* global variable, which was
+not altered by the *del* command.
+It is also still possible to reference the window as *window_list[index]*, where
+*index* is the window index given in the output of the *plot_list()* function.
 
-You could also create a plot window (i.e. a *_PlotWindow* instance) withou giving
+You could also create a plot window (i.e. a *_PlotWindow* instance) without giving
 a name to it:
 
 >>> x = linspace(0,100,101)
@@ -1065,7 +1071,7 @@ The *plot_reset()* function allows to reset the window properties:
 - clears the plot area
 
 The *plot_axes* argument, which is *True* by default, tells the function to
-plots the axes [#plotaxes]_ after having cleared the window.
+plot the axes [#plotaxes]_ after having cleared the window.
 
 If one axis has a defined range which is completely negative (e.g. [-2,-1])
 and the logarithmic scale has been set, the linear scale is restored since
@@ -1092,7 +1098,7 @@ You can print an arbitrary string on the plot window using the *plot_label()* fu
 
 .. image:: https://raw.githubusercontent.com/pietromandracci/gnuplot_manager/master/images/plot_label-1.png
 
-x and y are the position at which the string must be printed, expressed in 
+x and y give the position at which the string must be printed, expressed in 
 characters, starting from the lower-left angle (x=1,y=1) of the graph.
 The *erase=True* argument removes all previously printed strings before 
 printing this one. If you pass the *erase=True*, but don't pass the
@@ -1123,16 +1129,23 @@ Exporting a plot window to a file
 A plot can be exported to a file in various formats using the
 *plot_print()* function. The first argument passed must be the
 *_PlotWindow* instance of the plot you want to export, followed
-by: the terminal used to create the image, the filename, and an
-optional string with additional options to pass to gnuplot.
+by the following optional arguments:
+
+- the terminal used to create the image;
+- the directory in which file must be saved (default is the CWD);
+- the filename;
+- an optional string with additional options to pass to gnuplot.
+
+Example:
 
 >>> myplot = gm.new_plot()
 >>> gm.plot_function(myplot, 'cos(x)')
 (0,'Ok')
->>> gm.plot_print(myplot, terminal='png', filename='cosx.png', options='background \"#c0c000\"')
+>>> gm.plot_print(myplot, terminal='png', dirname='images', filename='cosx.png', options='background \"#c0c000\"')
 (0, 'Ok')
 
-The file *cosx.png* is created in the current working directory, with the following image:
+The file *cosx.png* is saved in the *images* directory, which is created in the
+current working directory if it doesn't exist yet, with the following image:
 
 .. image:: https://raw.githubusercontent.com/pietromandracci/gnuplot_manager/master/images/cosx.png
            
@@ -1154,13 +1167,22 @@ png
 >>> print(gm.PRINT_TERMINALS)
 ('png', 'jpeg', 'eps', 'gif', 'svg', 'latex', 'postscript', 'pdfcairo', 'dumb')
 
-You can also export all the open plot windows at once, using the *plot_print_all()*
-function. In this case, however, the default filenames are used, and the options,
-if given, are the same for all the windows.
-
-Read the function docstring for more datails:
+Read the function docstring for more details:
 
 >>> help(gm.plot_print)
+
+Exporting all the plot windows
+------------------------------
+
+You can also export all the open plot windows at once, using the *plot_print_all()*
+function. In this case, however, the default filenames are used, and the options,
+if given, are the same for all the windows.  You can still pass the argument *dirname*
+to select a directory where all the files must be saved. Example:
+
+>>> gm.plot_print_all(dirname='images')
+
+all the open plots will be saved in the *images* directory, which will be created if it
+doesn't exist yet.
 
   
 Sending arbitrary commands to gnuplot

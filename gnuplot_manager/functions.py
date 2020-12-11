@@ -644,6 +644,7 @@ def plot_functions(plot_window, func_list, replot=False):
 
 def plot_print(plot_window,
                terminal=DEFAULT_PRINT_TERM,
+               dirname=None,
                filename=None,
                options=None):
     """ Export the plot to a file.
@@ -658,6 +659,8 @@ def plot_print(plot_window,
         terminal:       type of terminal to use to print the image 
                         (e.g. 'png', 'jpeg', 'gif') mus be one of the
                         terminal listed in the PRINT_TERMINALS global variable
+        dirname:        name of the directory where file must be saved;
+                        if not given, is the current working directory
         filename:       the file to which the image must be saved
                         if not given, or set to None, a default one is used
         options:        a string with terminal options,
@@ -687,6 +690,11 @@ def plot_print(plot_window,
     else:
         filename = correct_filename(str(filename))
         
+    if (dirname is not None):
+        dirname = correct_filename(str(dirname))
+        if not path.exists(dirname): mkdir(dirname)
+        filename = path.join(dirname, filename)
+        
     # Save the current terminal settings
     plot_window._command('set terminal push')
 
@@ -713,7 +721,7 @@ def plot_print(plot_window,
     return (status, message)
 
 
-def plot_print_all(terminal=DEFAULT_PRINT_TERM, options=None):
+def plot_print_all(terminal=DEFAULT_PRINT_TERM, dirname=None, options=None):
     """ Export all the open plot windows to files.
 
         Parameters
@@ -721,6 +729,8 @@ def plot_print_all(terminal=DEFAULT_PRINT_TERM, options=None):
 
         terminal:       type of terminal to use to print the plots 
                         e.g. 'png', 'jpeg', 'gif'
+        dirname:        name of the directory where files must be saved;
+                        if not given, is the current working directory
         options:        a string with terminal options,
                         read gnuplot documentations for help
 
@@ -735,7 +745,10 @@ def plot_print_all(terminal=DEFAULT_PRINT_TERM, options=None):
     if not window_list: return ERROR_NO_PLOTS    
        
     for plot_window in window_list:
-        plot_print(plot_window, terminal=terminal, options=options)
+        plot_print(plot_window,
+                   terminal=terminal,
+                   dirname=dirname,
+                   options=options)
 
     return (status, message)    
 
@@ -1166,6 +1179,7 @@ def plot_check(plot_window, expanded=False, printout=True, getstring=False):
     if (plot_window.plot_type is None): return ERROR_CLOSED_PLOT   
     
     string = ''
+    string += 'Window index:         ' + str(window_list.index(plot_window)) + '\n'
     string += 'Window number:        ' + str(plot_window.window_number) + '\n'
     string += 'Terminal type:        ' + '\"' + plot_window.term_type + '\"' + '\n'
     string += 'Persistence:          ' + '\"' + str(plot_window.persistence) + '\"' + '\n'
