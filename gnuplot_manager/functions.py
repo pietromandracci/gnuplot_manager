@@ -178,7 +178,7 @@ def plot_set(plot,
         leaves it untouched: e.g. if you have xrange=[0,1] and call 
         plot_set(<plot>, xmin=None) you are not removing the xmin limit.
         It is possibile to remove limits using the resetx, resety 
-        and resez parameters, which tell the function to remove the actual 
+        and resetz parameters, which tell the function to remove the actual 
         limits *before* it applies the new ones.
         Example:
         if you have xrange=[0,1] and you want to change it to [-inf,2], 
