@@ -1,4 +1,16 @@
 =============
+Version 0.1.6
+=============
+
+
+Documentation and testing
+-------------------------
+
+The *README.rst* file was updated.
+
+
+
+=============
 Version 0.1.5
 =============
 
