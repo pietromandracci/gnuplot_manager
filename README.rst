@@ -7,7 +7,7 @@
 Introduction
 ============
 
-This package allows to plot data or mathematical expressions inside python,
+This package allows to plot data or mathematical expressions inside Python,
 using the gnuplot program, in the form of 2D or 3D plots.
 
 Multiple plot windows can be opened, and a separate gnuplot process 
@@ -19,7 +19,7 @@ the list of which is reported in the `List of available functions`_
 section at the end of this document.
 
 The package has been designed starting from my own needs, so only a
-very limited number of the many gnuplot functionalities have been
+limited number of the many gnuplot functionalities have been
 implemented, but more may be added in the future:
 
 - plotting 2D or 3D graphs from data
@@ -34,62 +34,66 @@ to pass arbitrary commands to gnuplot, as described in the section
 The examples given in this document can be executed by copying the expressions
 after *'>>>'* and pasting them in the python console command line. Note that,
 although they have been tested, errors are still possible.
+    
+This package is released under a GPL licence, in the hope it can be
+useful to someone else. Feeback, bug reports, and suggestions are welcome.
 
-.. note:: If the package has been correctly installed, a small demo script can
-   be run from the system terminal by typing::
 
-   $ python -m gnuplot_manager.demo
+
+Istalling and importing the package
+===================================
+
+How to install in the global Python environment
+-----------------------------------------------
+
+*gnuplot_manager* is distribuited as a *Python wheel* so, if you have the program *pip* installed on your system,
+you can simply type at the console::
+
+$ pip install gnuplot_manager
+
+in this way the Python interpreter will be able to use the package regardless of the directory from where it is invoked.
+
+.. note::  In some Linux distributions (e.g. Debian-related ones) the operative system doesn't allow *pip* to install software
+           in the main file hierarchy and  you will get an error message saying "externally managed environment" or something similar.
+           In this situation, you can install the package in a local directory, as described in the
+           `How to install in a local directory`_ section, or inside a *Python virtual environment*.
+           You can find instructions on how to create a virtual environment
+           `in this page <https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments>`_
+           of the Python documentation.
+
+
+How to install in a local directory
+-----------------------------------
+
+You can also install *gnuplot_manager* in any directory of your system by dowloading the most recent zip archive from the  
+`GitHub page <https://github.com/pietromandracci/gnuplot_manager/releases>`_ and unzipping it in a directory of your choice.
+
+A new directory will be created, named *gnuplot_manager-x.y.z*, where *x.y.z* identifies the version number.
+In order to use *gnuplot_manager* you will have to open a terminal, navigate to this directory, and call the Python interpreter from there.
+
+If you want to use the package from another directory, you can create in that directory a symbolic link to the directory
+named *pysica*, which is inside the *gnuplot_manager-x.y.z* directory.
+
+
+Running a demo
+--------------
+
+If the package has been correctly installed, a small demo script can be run from the system terminal by typing::
+
+   $ python3 -m gnuplot_manager.demo
 
    or inside the python console by typing::
 
    >>> from gnuplot_manager.demo import main
    >>> main()
 
-   The demo will run without the need of any input.
-    
-This package is released under a GPL licence, in the hope it can be
-useful to someone else. Feeback, bug reports, and suggestions are welcome.
+The demo will run without the need of any input.  
 
 
-Package structure
-=================
+How to import in a Python module
+--------------------------------
 
-This package contains the following modules:
-
-*global_variables.py*
-    contains the global variables, mainly used to define default values of 
-    some parameters;
-    
-*errors.py*
-    contains error messages returned by the package functions;
-    
-*classes.py*
-    contains the *_PlotWindow* class, used to create a structure containing the
-    gnuplot process (instance of *subprocess.Popen*) and some information on
-    the plot;
-
-*functions.py*
-    contains all the functions used to create plot windows and plot 
-    data or mathematical expressions on them;
-
-*funcutils.py*
-    contains some utility functions which are not intended to be called
-    directly by the user;
-
-*demo.py*
-    a small demo script;
-
-*test.py*
-    a script to test most of the package functions.
-    
-
-Importing the package
-=====================
-
-How to import
--------------
-
-To import *gnuplot_manager* you can use the *import* directive as usual:
+To import *gnuplot_manager* in a mudule or script you can use the *import* directive as usual:
 
 >>> import gnuplot_manager
 
@@ -126,7 +130,7 @@ Checking gnuplot installation at the module import
 When the module is imported, it checks the availability of the gnuplot program
 and sets the global variable *gnuplot_installed* accordingly.
 This is achieved by means of a call to the program *which*, that should be
-installed in nearly all linux distributions. However, if it is not installed
+installed in nearly all Linux distributions. However, if it is not installed
 on your system, the *gnuplot_installed* variable is set to *None*:
 
 *gnuplot_installed=True*
@@ -142,7 +146,40 @@ Example:
 
 >>> print(gm.gnuplot_installed)
 True
+     
 
+
+Package structure
+=================
+
+This package contains the following modules:
+
+*global_variables.py*
+    contains the global variables, mainly used to define default values of 
+    some parameters;
+    
+*errors.py*
+    contains error messages returned by the package functions;
+    
+*classes.py*
+    contains the *_PlotWindow* class, used to create a structure containing the
+    gnuplot process (instance of *subprocess.Popen*) and some information on
+    the plot;
+
+*functions.py*
+    contains all the functions used to create plot windows and plot 
+    data or mathematical expressions on them;
+
+*funcutils.py*
+    contains some utility functions which are not intended to be called
+    directly by the user;
+
+*demo.py*
+    a small demo script;
+
+*test.py*
+    a script to test most of the package functions.
+    
 
 Creating a new plot window
 ==========================
