@@ -95,7 +95,7 @@ The demo will run without the need of any input.
 How to import in a Python module
 --------------------------------
 
-To import *gnuplot_manager* in a mudule or script you can use the *import* directive as usual:
+To import *gnuplot_manager* in a module or script you can use the *import* directive as usual:
 
 >>> import gnuplot_manager
 
