@@ -40,21 +40,21 @@ useful to someone else. Feeback, bug reports, and suggestions are welcome.
 
 
 
-Istalling and importing the package
-===================================
+Installing and importing the package
+====================================
 
 How to install in the global Python environment
 -----------------------------------------------
 
-*gnuplot_manager* is distribuited as a *Python wheel* so, if you have the program *pip* installed on your system,
-you can simply type at the console::
+*gnuplot_manager* is distribuited as a *Python wheel* so, if you have the program *pip* installed on your system
+and your Linux distribution allows it, you can simply type at the console::
 
 $ pip install gnuplot_manager
 
 in this way the Python interpreter will be able to use the package regardless of the directory from where it is invoked.
 
 .. note::  In some Linux distributions (e.g. Debian-related ones) the operative system doesn't allow *pip* to install software
-           in the main file hierarchy and  you will get an error message saying "externally managed environment" or something similar.
+           in the main file hierarchy and you will get an error message saying "externally managed environment" or something similar.
            In this situation, you can install the package in a local directory, as described in the
            `How to install in a local directory`_ section, or inside a *Python virtual environment*.
            You can find instructions on how to create a virtual environment
@@ -65,14 +65,16 @@ in this way the Python interpreter will be able to use the package regardless of
 How to install in a local directory
 -----------------------------------
 
-You can also install *gnuplot_manager* in any directory of your system by dowloading the most recent zip archive from the  
+You can install *gnuplot_manager* in any directory of your filesystem by dowloading the most recent zip archive from the  
 `GitHub page <https://github.com/pietromandracci/gnuplot_manager/releases>`_ and unzipping it in a directory of your choice.
 
 A new directory will be created, named *gnuplot_manager-x.y.z*, where *x.y.z* identifies the version number.
-In order to use *gnuplot_manager* you will have to open a terminal, navigate to this directory, and call the Python interpreter from there.
+In order to use *gnuplot_manager* you will have to call the Python interpreter from this directory, so that it will be able to find the
+package files.
 
-If you want to use the package from another directory, you can create in that directory a symbolic link to the directory
-named *pysica*, which is inside the *gnuplot_manager-x.y.z* directory.
+You can also use the package calling the Python interpreter from another directory,
+but you have to create in that directory a symbolic link to the directory named *gnuplot_manager*,
+which is inside the *gnuplot_manager-x.y.z* directory created by the unzip process.
 
 
 Running a demo
